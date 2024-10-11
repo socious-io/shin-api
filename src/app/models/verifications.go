@@ -148,6 +148,9 @@ func (v *Verification) Update(ctx context.Context) error {
 }
 
 func (v *Verification) NewConnection(ctx context.Context, callback string) error {
+	if v.Status == StatusVerifRequested {
+		return nil
+	}
 	conn, err := wallet.CreateConnection(callback)
 	if err != nil {
 		return err
@@ -177,7 +180,7 @@ func (v *Verification) ProofRequest(ctx context.Context) error {
 		"type": v.Schema.Name,
 	})
 
-	presentID, err := wallet.ProofRequest(*v.ConnectionID, challenge)
+	presentID, err := wallet.ProofRequest(*v.ConnectionID, string(challenge))
 	if err != nil {
 		return err
 	}
