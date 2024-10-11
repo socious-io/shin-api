@@ -33,8 +33,8 @@ func createDiscordReviewMessage(kyb *models.KYBVerification, u *models.User, org
 	message += fmt.Sprintf("Description: %s\n", org.Description)
 	message += fmt.Sprintf("\nDocuments---------------------------%s\n\n", documents)
 	message += fmt.Sprintf("\nReviewing----------------------------\n")
-	message += fmt.Sprintf("Approve: %s/kyb/%s/approve?admin_access_token=%s\n", config.Config.Host, kyb.ID, config.Config.Admin.AccessToken)
-	message += fmt.Sprintf("Reject: %s/kyb/%s/reject?admin_access_token=%s\n", config.Config.Host, kyb.ID, config.Config.Admin.AccessToken)
+	message += fmt.Sprintf("Approve: <%s/kyb/%s/approve?admin_access_token=%s>\n", config.Config.Host, kyb.ID, config.Config.Admin.AccessToken)
+	message += fmt.Sprintf("Reject: <%s/kyb/%s/reject?admin_access_token=%s>\n", config.Config.Host, kyb.ID, config.Config.Admin.AccessToken)
 
 	return message
 
