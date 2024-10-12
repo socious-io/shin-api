@@ -149,7 +149,7 @@ func ProofVerify(presentID string) (H, error) {
 	if err := json.Unmarshal(payload, &vc); err != nil {
 		return nil, err
 	}
-	return vc, nil
+	return vc["vc"].(map[string]interface{})["credentialSubject"].(map[string]interface{}), nil
 }
 
 func SendCredential(connectionID, did string, claims interface{}) (H, error) {

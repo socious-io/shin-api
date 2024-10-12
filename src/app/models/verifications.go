@@ -25,12 +25,13 @@ type Verification struct {
 	UserID      uuid.UUID `db:"user_id" json:"user_id"`
 	User        *User     `db:"-" json:"user"`
 
-	PresentID     *string                 `db:"present_id" json:"present_id"`
-	ConnectionID  *string                 `db:"connection_id" json:"connection_id"`
-	ConnectionURL *string                 `db:"connection_url" json:"connection_url"`
-	Body          types.JSONText          `db:"body" json:"body"`
-	Attributes    []VerificationAttribute `db:"-" json:"attributes"`
-	Status        VerificationStatusType  `db:"status" json:"status"`
+	PresentID       *string                 `db:"present_id" json:"present_id"`
+	ConnectionID    *string                 `db:"connection_id" json:"connection_id"`
+	ConnectionURL   *string                 `db:"connection_url" json:"connection_url"`
+	Body            types.JSONText          `db:"body" json:"body"`
+	Attributes      []VerificationAttribute `db:"-" json:"attributes"`
+	Status          VerificationStatusType  `db:"status" json:"status"`
+	ValidationError *string                 `db:"validation_error" json:"validation_error"`
 
 	ConnectionAt *time.Time `db:"connection_at" json:"connection_at"`
 	VerifiedAt   *time.Time `db:"verified_at" json:"verified_at"`
@@ -206,13 +207,23 @@ func (v *Verification) ProofVerify(ctx context.Context) error {
 		return err
 	}
 	vcData, _ := json.Marshal(vc)
-	query := "credentials/update_present_verify_verification"
-	if err := validateVC(*v.Schema, vc, v.Attributes); err != nil {
-		query = "credentials/update_present_failed_verification"
+	if len(v.Attributes) > 0 {
+		if err := validateVC(*v.Schema, vc, v.Attributes); err != nil {
+			rows, err := database.Query(
+				ctx,
+				"credentials/update_present_failed_verification",
+				v.ID, vcData, err.Error(),
+			)
+			if err != nil {
+				return err
+			}
+			rows.Close()
+			return nil
+		}
 	}
 	rows, err := database.Query(
 		ctx,
-		query,
+		"credentials/update_present_verify_verification",
 		v.ID, vcData,
 	)
 	if err != nil {
@@ -275,6 +286,10 @@ func GetVerifications(userId uuid.UUID, p database.Paginate) ([]Verification, in
 }
 
 func validateVC(schema Schema, vc wallet.H, attrs []VerificationAttribute) error {
+	if err := database.Fetch(&schema, schema.ID); err != nil {
+		return err
+	}
+
 	for _, attr := range attrs {
 		attrName := ""
 		for _, a := range schema.Attributes {
@@ -300,7 +315,7 @@ func validateVC(schema Schema, vc wallet.H, attrs []VerificationAttribute) error
 			if err != nil {
 				return err
 			}
-			if val < attrVal {
+			if val <= attrVal {
 				return validationErr
 			}
 		case OperatorSmaller:
@@ -308,7 +323,7 @@ func validateVC(schema Schema, vc wallet.H, attrs []VerificationAttribute) error
 			if err != nil {
 				return err
 			}
-			if val > attrVal {
+			if val >= attrVal {
 				return validationErr
 			}
 		case OperatorNot:
@@ -330,6 +345,7 @@ func convertValsToNumber(value interface{}, attrVal string) (int, int, error) {
 		if intVal, err := strconv.Atoi(v); err == nil {
 			val = intVal
 		} else {
+
 			if t, err := time.Parse(time.RFC3339, v); err == nil {
 				val = int(t.Unix())
 				isTime = true
@@ -340,7 +356,7 @@ func convertValsToNumber(value interface{}, attrVal string) (int, int, error) {
 	}
 	if isTime {
 		if t, err := time.Parse(time.RFC3339, attrVal); err == nil {
-			return int(t.Unix()), val, nil
+			return val, int(t.Unix()), nil
 		}
 	}
 	attrIntVal, err := strconv.Atoi(attrVal)
