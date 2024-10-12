@@ -93,10 +93,7 @@ func verificationsGroup(router *gin.Engine) {
 			return
 		}
 		ctx, _ := c.Get("ctx")
-		if err := v.ProofVerify(ctx.(context.Context)); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			return
-		}
+		v.ProofVerify(ctx.(context.Context))
 		c.JSON(http.StatusOK, v)
 	})
 

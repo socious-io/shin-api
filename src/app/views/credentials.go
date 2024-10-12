@@ -87,6 +87,28 @@ func credentialsGroup(router *gin.Engine) {
 		})
 	})
 
+	g.PATCH("/:id/revoke", auth.LoginRequired(), func(c *gin.Context) {
+		id := c.Param("id")
+		cv, err := models.GetCredential(uuid.MustParse(id))
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		u, _ := c.Get("user")
+		if cv.CreatedID.String() != u.(*models.User).ID.String() {
+			c.JSON(http.StatusForbidden, gin.H{"error": "not allow"})
+			return
+		}
+		ctx, _ := c.Get("ctx")
+		if err := cv.Revoke(ctx.(context.Context)); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{
+			"message": "success",
+		})
+	})
+
 	g.POST("", auth.LoginRequired(), func(c *gin.Context) {
 		form := new(CredentialForm)
 		if err := c.ShouldBindJSON(form); err != nil {
@@ -96,6 +118,10 @@ func credentialsGroup(router *gin.Engine) {
 		schema, err := models.GetSchema(form.SchemaID)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		if schema.IssueDisabled {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "schema for issuing credentials is disabled"})
 			return
 		}
 		cv := new(models.Credential)

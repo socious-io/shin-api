@@ -10,15 +10,16 @@ import (
 )
 
 type Schema struct {
-	ID          uuid.UUID   `db:"id" json:"id"`
-	Name        string      `db:"name" json:"name"`
-	Description *string     `db:"description" json:"description"`
-	CreatedID   *uuid.UUID  `db:"created_id" json:"created_id"`
-	Created     *User       `db:"-" json:"created"`
-	Public      bool        `db:"public" json:"public"`
-	Deleteable  bool        `db:"deleteable" json:"deleteable"`
-	Attributes  []Attribute `db:"-" json:"attributes"`
-	CreatedAt   time.Time   `db:"created_at" json:"created_at"`
+	ID            uuid.UUID   `db:"id" json:"id"`
+	Name          string      `db:"name" json:"name"`
+	Description   *string     `db:"description" json:"description"`
+	CreatedID     *uuid.UUID  `db:"created_id" json:"created_id"`
+	Created       *User       `db:"-" json:"created"`
+	Public        bool        `db:"public" json:"public"`
+	IssueDisabled bool        `db:"issue_disabled" json:"issue_disabled"`
+	Deleteable    bool        `db:"deleteable" json:"deleteable"`
+	Attributes    []Attribute `db:"-" json:"attributes"`
+	CreatedAt     time.Time   `db:"created_at" json:"created_at"`
 
 	AttributesJson types.JSONText `db:"attributes" json:"-"`
 	CreatedJson    types.JSONText `db:"created" json:"-"`

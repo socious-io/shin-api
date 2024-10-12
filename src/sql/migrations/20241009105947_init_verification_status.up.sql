@@ -1,0 +1,1 @@
+ALTER TYPE verification_status_type ADD VALUE 'CREATED';

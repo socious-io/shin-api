@@ -32,9 +32,10 @@ func (a AttributeType) Value() (driver.Value, error) {
 type VerificationStatusType string
 
 const (
-	StatusRequested VerificationStatusType = "REQUESTED"
-	StatusVerfied   VerificationStatusType = "VERIFIED"
-	StatusFailed    VerificationStatusType = "FAILED"
+	StatusVerifCreated   VerificationStatusType = "CREATED"
+	StatusVerifRequested VerificationStatusType = "REQUESTED"
+	StatusVerifVerfied   VerificationStatusType = "VERIFIED"
+	StatusVerifFailed    VerificationStatusType = "FAILED"
 )
 
 func (c *VerificationStatusType) Scan(value interface{}) error {
@@ -56,9 +57,11 @@ func (c VerificationStatusType) Value() (driver.Value, error) {
 type CredentialStatusType string
 
 const (
+	StatusCreated  CredentialStatusType = "CREATED"
 	StatusIssued   CredentialStatusType = "ISSUED"
 	StatusClaimed  CredentialStatusType = "CLAIMED"
 	StatusCanceled CredentialStatusType = "CANCELED"
+	StatusRevoked  CredentialStatusType = "REVOKED"
 )
 
 func (c *CredentialStatusType) Scan(value interface{}) error {

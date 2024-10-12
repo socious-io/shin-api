@@ -1,0 +1,1 @@
+ALTER TABLE credential_verifications ADD COLUMN validation_error TEXT;

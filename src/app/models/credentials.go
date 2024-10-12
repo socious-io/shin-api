@@ -3,6 +3,7 @@ package models
 import (
 	"context"
 	"errors"
+	"fmt"
 	"net/url"
 	"shin/src/config"
 	"shin/src/database"
@@ -30,6 +31,7 @@ type Credential struct {
 	RecipientID *uuid.UUID `db:"recipient_id" json:"recipient_id"`
 	Recipient   *Recipient `db:"-" json:"recipient"`
 
+	RecordID      *string        `db:"record_id" json:"record_id"`
 	ConnectionID  *string        `db:"connection_id" json:"connection_id"`
 	ConnectionURL *string        `db:"connection_url" json:"connection_url"`
 	Claims        types.JSONText `db:"claims" json:"claims"`
@@ -39,6 +41,7 @@ type Credential struct {
 	ConnectionAt *time.Time `db:"connection_at" json:"connection_at"`
 	IssuedAt     *time.Time `db:"issued_at" json:"issued_at"`
 	ExpiredAt    *time.Time `db:"expired_at" json:"expired_at"`
+	RevokedAt    *time.Time `db:"revoked_at" json:"revoked_at"`
 	UpdatedAt    time.Time  `db:"updated_at" json:"updated_at"`
 	CreatedAt    time.Time  `db:"created_at" json:"created_at"`
 
@@ -125,12 +128,39 @@ func (c *Credential) Issue(ctx context.Context) error {
 	if err := c.Organization.NewDID(ctx); err != nil {
 		return err
 	}
-	if _, err := wallet.SendCredential(*c.ConnectionID, *c.Organization.DID, c.Claims); err != nil {
+	issued, err := wallet.SendCredential(*c.ConnectionID, *c.Organization.DID, c.Claims)
+	if err != nil {
 		return err
 	}
+
 	rows, err := database.Query(
 		ctx,
 		"credentials/update_issuing",
+		c.ID, issued["recordId"],
+	)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+	return nil
+}
+
+func (c *Credential) Revoke(ctx context.Context) error {
+	if c.Status != StatusIssued {
+		return fmt.Errorf("credential with status %s could not be revoked", c.Status)
+	}
+
+	if c.RecordID == nil {
+		return errors.New("could not revoke credential without record id")
+	}
+
+	if err := wallet.RevokeCredential(*c.RecordID); err != nil {
+		return err
+	}
+
+	rows, err := database.Query(
+		ctx,
+		"credentials/update_revoke",
 		c.ID,
 	)
 	if err != nil {
