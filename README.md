@@ -44,4 +44,3 @@ $ go get
 $ go run cmd/migrate/main.go up
 $ go run cmd/app/main.go
 ``` 
-
