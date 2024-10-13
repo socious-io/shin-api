@@ -95,14 +95,14 @@ func (ginLogger *GinLogger) Auto(id string, fields GinLogFields) {
 	reqLog := fmt.Sprintf("Request | %s | %s | %s | %s | %s", id, fields.Method, fields.Path, fields.RequestHeaders, fields.RequestBody.String())
 	resLog := fmt.Sprintf("Response | %s | %s | %s | %s | %d | %s | %s", id, fields.Method, fields.Path, fields.Headers, fields.StatusCode, fields.Body.String(), fields.Duration)
 
-	ginLogger.Info(reqLog)
-	if fields.StatusCode >= 100 {
+	if fields.StatusCode < 400 {
+		ginLogger.Info(reqLog)
 		ginLogger.Info(resLog)
-	}
-	if fields.StatusCode >= 400 {
+	} else if fields.StatusCode < 500 {
+		ginLogger.Warn(reqLog)
 		ginLogger.Warn(resLog)
-	}
-	if fields.StatusCode >= 500 {
+	} else {
+		ginLogger.Error(reqLog)
 		ginLogger.Error(resLog)
 	}
 }
