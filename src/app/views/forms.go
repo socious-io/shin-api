@@ -66,3 +66,7 @@ type ProfileUpdateForm struct {
 type KYBVerificationForm struct {
 	Documents []string `json:"documents"`
 }
+
+type ApikeyForm struct {
+	Name string `json:"name"`
+}
