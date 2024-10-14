@@ -148,23 +148,25 @@ func kybVerificationGroup(router *gin.Engine) {
 			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{})
+		c.JSON(http.StatusOK, verification)
 	})
 
 	g.GET("/:id/reject", adminAccessRequired(), func(c *gin.Context) {
 		ctx, _ := c.Get("ctx")
 		verificationId := c.Param("id")
 
-		kybVerification := models.KYBVerification{
-			ID: uuid.MustParse(verificationId),
-		}
-
-		if err := kybVerification.ChangeStatus(ctx.(context.Context), models.KYBStatusRejected); err != nil {
+		verification, err := models.GetById(uuid.MustParse(verificationId))
+		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{})
+		if err := verification.ChangeStatus(ctx.(context.Context), models.KYBStatusRejected); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+
+		c.JSON(http.StatusOK, verification)
 	})
 
 }

@@ -77,8 +77,18 @@ func (k *KYBVerification) Create(ctx context.Context, documents []string) (*KYBV
 }
 
 func (k *KYBVerification) ChangeStatus(ctx context.Context, status KybVerificationStatusType) error {
-	_, err := database.Query(ctx, "kyb/change_status", k.ID, status)
-	return err
+	rows, err := database.Query(ctx, "kyb/change_status", k.ID, status)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		if err := k.Scan(rows); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func GetById(id uuid.UUID) (*KYBVerification, error) {
