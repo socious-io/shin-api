@@ -26,7 +26,7 @@ func (sgc *SendGridType) SendWithTemplate(address string, name string, templateI
 	}
 	//Create Mail payload
 	m := mail.NewV3Mail()
-	m.SetFrom(mail.NewEmail("Socious", "no-replay@socious.io"))
+	m.SetFrom(mail.NewEmail("Shin", "no-replay@shinid.com"))
 	m.SetTemplateID(templateId)
 
 	//Adding Personalization
