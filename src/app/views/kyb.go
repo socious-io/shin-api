@@ -148,7 +148,7 @@ func kybVerificationGroup(router *gin.Engine) {
 			return
 		}
 
-		c.JSON(http.StatusOK, verification)
+		c.JSON(http.StatusOK, gin.H{"message": "success"})
 	})
 
 	g.GET("/:id/reject", adminAccessRequired(), func(c *gin.Context) {
