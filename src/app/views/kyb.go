@@ -24,8 +24,19 @@ func createDiscordReviewMessage(kyb *models.KYBVerification, u *models.User, org
 	message := fmt.Sprintf("ID: %s\n", kyb.ID)
 	message += "\nUser--------------------------------\n"
 	message += fmt.Sprintf("ID: %s\n", u.ID)
-	message += fmt.Sprintf("Firstname: %s\n", *u.FirstName)
-	message += fmt.Sprintf("Lastname: %s\n", *u.LastName)
+
+	if u.FirstName != nil {
+		message += fmt.Sprintf("Firstname: %s\n", *u.FirstName)
+	} else {
+		message += "Firstname: N/A\n"
+	}
+
+	if u.LastName != nil {
+		message += fmt.Sprintf("Lastname: %s\n", *u.LastName)
+	} else {
+		message += "Lastname: N/A\n"
+	}
+
 	message += fmt.Sprintf("Email: %s\n", u.Email)
 	message += "\nOrganization------------------------\n"
 	message += fmt.Sprintf("ID: %s\n", org.ID)
@@ -137,23 +148,25 @@ func kybVerificationGroup(router *gin.Engine) {
 			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{})
+		c.JSON(http.StatusOK, gin.H{"message": "success"})
 	})
 
 	g.GET("/:id/reject", adminAccessRequired(), func(c *gin.Context) {
 		ctx, _ := c.Get("ctx")
 		verificationId := c.Param("id")
 
-		kybVerification := models.KYBVerification{
-			ID: uuid.MustParse(verificationId),
-		}
-
-		if err := kybVerification.ChangeStatus(ctx.(context.Context), models.KYBStatusRejected); err != nil {
+		verification, err := models.GetById(uuid.MustParse(verificationId))
+		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{})
+		if err := verification.ChangeStatus(ctx.(context.Context), models.KYBStatusRejected); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{"message": "success"})
 	})
 
 }
