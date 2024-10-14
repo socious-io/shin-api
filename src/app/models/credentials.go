@@ -176,6 +176,11 @@ func GetCredential(id uuid.UUID) (*Credential, error) {
 	if err := database.Fetch(c, id); err != nil {
 		return nil, err
 	}
+	schema, err := GetSchema(c.SchemaID)
+	if err != nil {
+		return nil, err
+	}
+	c.Schema = schema
 	return c, nil
 }
 

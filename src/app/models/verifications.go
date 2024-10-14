@@ -248,6 +248,11 @@ func GetVerification(id uuid.UUID) (*Verification, error) {
 	if err := database.Fetch(v, id); err != nil {
 		return nil, err
 	}
+	schema, err := GetSchema(v.SchemaID)
+	if err != nil {
+		return nil, err
+	}
+	v.Schema = schema
 	return v, nil
 }
 
