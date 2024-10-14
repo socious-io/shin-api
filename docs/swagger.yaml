@@ -220,6 +220,111 @@ paths:
                     enum:
                       - AVAILABLE
                       - EXISTS
+  /integrations/keys:
+    get:
+      summary: Get All Keys
+      description: Fetch all of the integration keys for current user
+      tags:
+        - Integration
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  limit:
+                    type: number
+                  page:
+                    type: number
+                  total:
+                    type: number
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/IntegrationKey'
+    post:
+      summary: Create a Key
+      description: Create a integration key for current user
+      tags:
+        - Integration
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: 'string'
+                  example: 'Key Name'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IntegrationKey'
+  /integrations/keys/{key_id}:
+    put:
+      summary: Update a Key
+      description: Update the integration key for current user
+      tags:
+        - Integration
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: key_id
+          in: path
+          schema:
+            type: string
+          required: true
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: 'string'
+                  example: 'Key Name'
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IntegrationKey'
+    delete:
+      summary: Delete a Key
+      description: Delete the integration key for current user
+      tags:
+        - Integration
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: key_id
+          in: path
+          schema:
+            type: string
+          required: true
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: success
 components:
   securitySchemes:
     bearerAuth:
@@ -233,4 +338,32 @@ components:
           type: string
         refresh_token:
           type: string
+
+    IntegrationKey:
+      type: object
+      properties:
+        id:
+          type: string
+          example: 339ac66a-e18d-4622-904b-4929541995ff
+        name:
+          type: string
+          example: Key Name
+        key:
+          type: string
+          example: wy43fFdRW-u-tlhhSQCK0Yd24Qy7bYFEIS-tI9AjM54=
+        secret:
+          type: string
+          example: pE8GsvI2MTTeBFVlPSg1fzqSLm4Alv_GQ8FBpEHZb-_XQoeoWbLVGVGsbiF8As-AKzTKZSphwHjviZeUDa-l-Q==
+        base_url:
+          type: string
+          example: http://localhost:3000
+        status:
+          type: string
+          enum: 
+              - ACTIVE
+              - SUSPENDED
+          example: ACTIVE
+        created_at:
+          type: string
+          example: 2024-10-13T21:06:58.923694Z
   
