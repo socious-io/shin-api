@@ -137,10 +137,11 @@ func (v *Verification) Update(ctx context.Context) error {
 		v.Attributes[i].VerificationID = v.ID
 		v.Attributes[i].SchemaID = v.SchemaID
 	}
-
-	if _, err := database.TxExecuteQuery(tx, "credentials/create_verification_attributes", v.Attributes); err != nil {
-		tx.Rollback()
-		return err
+	if len(v.Attributes) > 0 {
+		if _, err := database.TxExecuteQuery(tx, "credentials/create_verification_attributes", v.Attributes); err != nil {
+			tx.Rollback()
+			return err
+		}
 	}
 	if err := tx.Commit(); err != nil {
 		return err
