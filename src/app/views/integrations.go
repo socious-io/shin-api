@@ -17,13 +17,13 @@ func integrationGroup(router *gin.Engine) {
 	g := router.Group("integrations")
 	g.Use(auth.LoginRequired())
 
-	g.GET("/keys", paginate(), auth.LoginRequired(), func(c *gin.Context) {
+	g.GET("", paginate(), auth.LoginRequired(), func(c *gin.Context) {
 		u, _ := c.Get("user")
 		paginate, _ := c.Get("paginate")
 		limit, _ := c.Get("limit")
 		page, _ := c.Get("page")
 
-		integrationKeys, total, err := models.GetAllKeysByUserId(u.(*models.User).ID, paginate.(database.Paginate))
+		integrationKeys, total, err := models.GetIntegrations(u.(*models.User).ID, paginate.(database.Paginate))
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
@@ -36,7 +36,7 @@ func integrationGroup(router *gin.Engine) {
 		})
 	})
 
-	g.POST("/keys", func(c *gin.Context) {
+	g.POST("", func(c *gin.Context) {
 		u, _ := c.Get("user")
 		ctx, _ := c.Get("ctx")
 
@@ -60,10 +60,10 @@ func integrationGroup(router *gin.Engine) {
 			return
 		}
 
-		c.JSON(http.StatusOK, integrationKeyCreated)
+		c.JSON(http.StatusCreated, integrationKeyCreated)
 	})
 
-	g.PUT("/keys/:id", func(c *gin.Context) {
+	g.PUT("/:id", func(c *gin.Context) {
 		ctx, _ := c.Get("ctx")
 		id := c.Param("id")
 
@@ -82,7 +82,7 @@ func integrationGroup(router *gin.Engine) {
 		c.JSON(http.StatusAccepted, integrationKey)
 	})
 
-	g.DELETE("/keys/:id", func(c *gin.Context) {
+	g.DELETE("/:id", func(c *gin.Context) {
 		u, _ := c.Get("user")
 		ctx, _ := c.Get("ctx")
 		id := c.Param("id")
