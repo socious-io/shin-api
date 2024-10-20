@@ -1,6 +1,8 @@
 env: "[development/test/production]"
 port: 3000
 secret: this-is-secret
+sso: # This should be same on the socious platform to bind trust token
+  secret: sec
 debug: true
 database: 
   url: postgres://shin:passwd@localhost:5432/shin?sslmode=disable

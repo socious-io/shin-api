@@ -9,10 +9,13 @@ import (
 var Config ConfigType
 
 type ConfigType struct {
-	Env      string `mapstructure:"env"`
-	Port     int    `mapstructure:"port"`
-	Debug    bool   `mapstructure:"debug"`
-	Secret   string `mapstructure:"secret"`
+	Env    string `mapstructure:"env"`
+	Port   int    `mapstructure:"port"`
+	Debug  bool   `mapstructure:"debug"`
+	Secret string `mapstructure:"secret"`
+	SSO    struct {
+		Secret string `mapstructure:"secret"`
+	} `mapstructure:"sso"`
 	Host     string `mapstructure:"host"`
 	Database struct {
 		URL        string `mapstructure:"url"`

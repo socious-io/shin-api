@@ -14,6 +14,14 @@ type Claims struct {
 	jwt.RegisteredClaims
 }
 
+type SSOClaims struct {
+	ID        *string `json:"id"`
+	FirstName *string `json:"first_name"`
+	LastName  *string `json:"last_name"`
+	Email     *string `json:"email"`
+	jwt.RegisteredClaims
+}
+
 func GenerateToken(id string, refresh bool) (string, error) {
 	expirationTime := time.Now().Add(24 * time.Hour)
 	claims := &Claims{
@@ -37,6 +45,21 @@ func VerifyToken(tokenString string) (*Claims, error) {
 	} else if !token.Valid {
 		return nil, errors.New("invalid token")
 	} else if claims, ok := token.Claims.(*Claims); ok {
+		return claims, nil
+	}
+
+	return nil, errors.New("unknown claims type, cannot proceed")
+}
+
+func VerifySSOToken(tokenString string) (*SSOClaims, error) {
+	token, err := jwt.ParseWithClaims(tokenString, &SSOClaims{}, func(token *jwt.Token) (interface{}, error) {
+		return []byte(config.Config.SSO.Secret), nil
+	})
+	if err != nil {
+		return nil, err
+	} else if !token.Valid {
+		return nil, errors.New("invalid token")
+	} else if claims, ok := token.Claims.(*SSOClaims); ok {
 		return claims, nil
 	}
 
