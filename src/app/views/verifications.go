@@ -33,6 +33,21 @@ func verificationsGroup(router *gin.Engine) {
 		})
 	})
 
+	g.GET("/:id/individuals", paginate(), auth.LoginRequired(), func(c *gin.Context) {
+		u, _ := c.Get("user")
+		page, _ := c.Get("paginate")
+		id := c.Param("id")
+		verifications, total, err := models.GetVerificationsIndividuals(u.(*models.User).ID, uuid.MustParse(id), page.(database.Paginate))
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{
+			"results": verifications,
+			"total":   total,
+		})
+	})
+
 	g.GET("/:id", auth.LoginRequired(), func(c *gin.Context) {
 		id := c.Param("id")
 		v, err := models.GetVerification(uuid.MustParse(id))
