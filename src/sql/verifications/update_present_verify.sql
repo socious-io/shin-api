@@ -1,4 +1,4 @@
-UPDATE credential_verifications SET
+UPDATE credential_verification_individuals SET
   body=$2,
   status='VERIFIED',
   verified_at=NOW(),

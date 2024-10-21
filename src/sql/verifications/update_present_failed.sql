@@ -1,4 +1,4 @@
-UPDATE credential_verifications SET
+UPDATE credential_verification_individuals SET
   body=$2,
   validation_error=$3,
   status='FAILED',

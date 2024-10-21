@@ -34,6 +34,11 @@ type VerificationForm struct {
 	} `json:"attributes"`
 }
 
+type VerificationIndividualForm struct {
+	CustomerID     string    `json:"customer_id" validate:"required"`
+	VerificationID uuid.UUID `json:"verification_id" validate:"required"`
+}
+
 type Claim struct {
 	Name  string      `json:"name" validate:"required,min=3,max=32"`
 	Value interface{} `json:"value" validate:"required"`

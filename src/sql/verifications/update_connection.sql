@@ -1,4 +1,4 @@
-UPDATE credentials SET
+UPDATE credential_verification_individuals SET
   connection_id=$2,
   connection_url=$3,
   connection_at=NOW(),

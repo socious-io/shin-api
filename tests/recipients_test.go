@@ -13,10 +13,6 @@ import (
 
 func recipientGroup() {
 
-	if focused && !authExecuted {
-		authGroup()
-	}
-
 	It("it should create recipient", func() {
 		for i, data := range recipientsData {
 			w := httptest.NewRecorder()

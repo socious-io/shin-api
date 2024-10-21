@@ -35,15 +35,15 @@ type Attribute struct {
 }
 
 func (Schema) TableName() string {
-	return "credential_schemas"
+	return "schemas"
 }
 
 func (Schema) FetchQuery() string {
-	return "credentials/fetch_schema"
+	return "schemas/fetch"
 }
 
 func (s *Schema) Delete(ctx context.Context) error {
-	rows, err := database.Query(ctx, "credentials/delete_schema", s.ID)
+	rows, err := database.Query(ctx, "schemas/delete", s.ID)
 	if err != nil {
 		return err
 	}
@@ -59,7 +59,7 @@ func (s *Schema) Create(ctx context.Context) error {
 	rows, err := database.TxQuery(
 		ctx,
 		tx,
-		"credentials/create_schema",
+		"schemas/create",
 		s.Name, s.Description, s.CreatedID, s.Public,
 	)
 	if err != nil {
@@ -77,7 +77,7 @@ func (s *Schema) Create(ctx context.Context) error {
 		s.Attributes[i].SchemaID = s.ID
 	}
 
-	if _, err := database.TxExecuteQuery(tx, "credentials/create_attributes", s.Attributes); err != nil {
+	if _, err := database.TxExecuteQuery(tx, "schemas/create_attributes", s.Attributes); err != nil {
 		tx.Rollback()
 		return err
 	}
@@ -105,7 +105,7 @@ func GetSchemas(userId uuid.UUID, p database.Paginate) ([]Schema, int, error) {
 		ids       []interface{}
 	)
 
-	if err := database.QuerySelect("credentials/get_schemas", &fetchList, userId, p.Limit, p.Offet); err != nil {
+	if err := database.QuerySelect("schemas/get", &fetchList, userId, p.Limit, p.Offet); err != nil {
 		return nil, 0, err
 	}
 

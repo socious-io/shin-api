@@ -1,0 +1,1 @@
+SELECT * FROM integration_keys WHERE secret=$1
