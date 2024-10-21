@@ -17,7 +17,7 @@ func integrationGroup(router *gin.Engine) {
 	g := router.Group("integrations")
 	g.Use(auth.LoginRequired())
 
-	g.GET("", paginate(), auth.LoginRequired(), func(c *gin.Context) {
+	g.GET("/keys", paginate(), auth.LoginRequired(), func(c *gin.Context) {
 		u, _ := c.Get("user")
 		paginate, _ := c.Get("paginate")
 		limit, _ := c.Get("limit")
@@ -36,7 +36,7 @@ func integrationGroup(router *gin.Engine) {
 		})
 	})
 
-	g.POST("", func(c *gin.Context) {
+	g.POST("/keys", func(c *gin.Context) {
 		u, _ := c.Get("user")
 		ctx, _ := c.Get("ctx")
 
@@ -63,7 +63,7 @@ func integrationGroup(router *gin.Engine) {
 		c.JSON(http.StatusCreated, integrationKeyCreated)
 	})
 
-	g.PUT("/:id", func(c *gin.Context) {
+	g.PUT("/keys/:id", func(c *gin.Context) {
 		ctx, _ := c.Get("ctx")
 		id := c.Param("id")
 
@@ -82,7 +82,7 @@ func integrationGroup(router *gin.Engine) {
 		c.JSON(http.StatusAccepted, integrationKey)
 	})
 
-	g.DELETE("/:id", func(c *gin.Context) {
+	g.DELETE("/keys/:id", func(c *gin.Context) {
 		u, _ := c.Get("user")
 		ctx, _ := c.Get("ctx")
 		id := c.Param("id")

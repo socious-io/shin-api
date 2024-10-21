@@ -16,7 +16,7 @@ func integrationGroup() {
 	It("it should create integration", func() {
 		w := httptest.NewRecorder()
 		reqBody, _ := json.Marshal(&gin.H{"name": "Test"})
-		req, _ := http.NewRequest("POST", "/integrations", bytes.NewBuffer(reqBody))
+		req, _ := http.NewRequest("POST", "/integrations/keys", bytes.NewBuffer(reqBody))
 		req.Header.Set("Content-Type", "application/json")
 		req.Header.Set("Authorization", authTokens[0])
 		router.ServeHTTP(w, req)
