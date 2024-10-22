@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 )
 
 func authGroup(router *gin.Engine) {
@@ -422,35 +421,38 @@ func authGroup(router *gin.Engine) {
 		u, _ := c.Get("user")
 		ctx, _ := c.Get("ctx")
 		tokenClaims, _ := c.Get("token_claims")
-		var userId uuid.UUID
 
-		//If user exists
-		if u != nil {
-			userId = u.(*models.User).ID
+		//Castings
+		ssoClaims := tokenClaims.(auth.SSOClaims)
+		var user *models.User
+
+		//If user doesn't exist, it needs to be registered
+		if u == nil {
+			//
+			newUser := &models.User{
+				Email:     *ssoClaims.Email,
+				FirstName: ssoClaims.FirstName,
+				LastName:  ssoClaims.LastName,
+				Username:  auth.GenerateUsername(*ssoClaims.Email),
+			}
+
+			if err := newUser.Create(ctx.(context.Context)); err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+				return
+			}
+			newUser.Status = "ACTIVE"
+			if err := newUser.Verify(ctx.(context.Context)); err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+				return
+			}
+			user = newUser
 		} else {
-			//Needs to be registered
-			u = &models.User{
-				Email:     *tokenClaims.(auth.SSOClaims).Email,
-				FirstName: tokenClaims.(auth.SSOClaims).FirstName,
-				LastName:  tokenClaims.(auth.SSOClaims).LastName,
-				Username:  auth.GenerateUsername(*tokenClaims.(auth.SSOClaims).Email),
-			}
-
-			if err := u.(*models.User).Create(ctx.(context.Context)); err != nil {
-				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-				return
-			}
-			u.(*models.User).Status = "ACTIVE"
-			if err := u.(*models.User).Verify(ctx.(context.Context)); err != nil {
-				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-				return
-			}
-			userId = u.(*models.User).ID
+			user = u.(*models.User)
 		}
 
-		tokens, err := auth.GenerateFullTokens(userId.String())
+		tokens, err := auth.GenerateFullTokens(user.ID.String())
 
-		if u.(*models.User).Password != nil {
+		if user.Password != nil {
 			tokens["status"] = "COMPLETED"
 		} else {
 			tokens["status"] = "PASSWORD_NOT_SET"
@@ -460,6 +462,38 @@ func authGroup(router *gin.Engine) {
 			c.JSON(http.StatusBadRequest, tokens)
 		}
 		c.JSON(http.StatusOK, tokens)
+
+	})
+
+	g.POST("/socious/set-password", auth.LoginRequired(), func(c *gin.Context) {
+		u, _ := c.Get("user")
+		ctx, _ := c.Get("ctx")
+
+		user := u.(*models.User)
+
+		form := new(auth.DirectPasswordChangeForm)
+		if err := c.ShouldBindJSON(form); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+
+		if user.Password == nil {
+			password, err := auth.HashPassword(form.Password)
+			user.Password = &password
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+				return
+			}
+			if err := user.UpdatePassword(ctx.(context.Context)); err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+				return
+			}
+			c.JSON(http.StatusCreated, gin.H{"message": "success"})
+			return
+		}
+
+		c.JSON(http.StatusBadRequest, gin.H{"error": "user already has a password"})
+		return
 
 	})
 
