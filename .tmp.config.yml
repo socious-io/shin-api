@@ -1,6 +1,7 @@
 env: "[development/test/production]"
 port: 3000
 secret: this-is-secret
+fronthost: "devapp.shinid.com"
 debug: true
 database: 
   url: postgres://shin:passwd@localhost:5432/shin?sslmode=disable
@@ -10,7 +11,9 @@ sendgrid:
   url: "url"
   api_key: "api_key"
   templates:
-    title: template_id
+    otp: template_id
+    forget-password: template_id
+    credentials-recipients: template_id
 s3:
   access_key_id: access_key_id
   secret_access_key: secret_access_key

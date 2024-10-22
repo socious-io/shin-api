@@ -10,6 +10,7 @@ import (
 	"shin/src/app/models"
 	"shin/src/config"
 	"shin/src/database"
+	"shin/src/services"
 	"shin/src/utils"
 	"strings"
 	"time"
@@ -147,6 +148,20 @@ func credentialsGroup(router *gin.Engine) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
+
+		//Sending Email
+		items := map[string]string{
+			"name": cv.Name,
+			"link": fmt.Sprintf("%s/connect/credential/%s", config.Config.FrontHost, cv.ID.String()),
+		}
+		services.SendEmail(services.EmailConfig{
+			Approach:    services.EmailApproachTemplate,
+			Destination: cv.Recipient.Email,
+			Title:       "Shin - Your verification credentials",
+			Template:    "credentials-recipients",
+			Args:        items,
+		})
+
 		c.JSON(http.StatusCreated, cv)
 	})
 
