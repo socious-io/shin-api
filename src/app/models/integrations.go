@@ -2,6 +2,7 @@ package models
 
 import (
 	"context"
+	"fmt"
 	"shin/src/database"
 	"time"
 
@@ -79,15 +80,24 @@ func (ik *IntegrationKey) Delete(ctx context.Context) error {
 	return nil
 }
 
-func GetKeyById(id uuid.UUID) (*IntegrationKey, error) {
+func GetIntegrationBySecret(secret string) (*IntegrationKey, error) {
 	k := new(IntegrationKey)
-	if err := database.Get(k, "integrations/fetch_key_by_id", id); err != nil {
+	if err := database.Get(k, "integrations/fetch_by_secret", secret); err != nil {
+		fmt.Println(err, "******************")
 		return nil, err
 	}
 	return k, nil
 }
 
-func GetAllKeysByUserId(userId uuid.UUID, p database.Paginate) ([]IntegrationKey, int, error) {
+func GetIntegration(id uuid.UUID) (*IntegrationKey, error) {
+	k := new(IntegrationKey)
+	if err := database.Fetch(k, id); err != nil {
+		return nil, err
+	}
+	return k, nil
+}
+
+func GetIntegrations(userId uuid.UUID, p database.Paginate) ([]IntegrationKey, int, error) {
 
 	var (
 		integrationKeys = []IntegrationKey{}

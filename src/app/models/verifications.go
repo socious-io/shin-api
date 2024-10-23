@@ -17,30 +17,49 @@ import (
 )
 
 type Verification struct {
-	ID          uuid.UUID `db:"id" json:"id"`
-	Name        string    `db:"name" json:"name"`
-	Description *string   `db:"description" json:"description"`
-	SchemaID    uuid.UUID `db:"schema_id" json:"schema_id"`
-	Schema      *Schema   `db:"-" json:"schema"`
-	UserID      uuid.UUID `db:"user_id" json:"user_id"`
-	User        *User     `db:"-" json:"user"`
+	ID          uuid.UUID               `db:"id" json:"id"`
+	Name        string                  `db:"name" json:"name"`
+	Description *string                 `db:"description" json:"description"`
+	SchemaID    uuid.UUID               `db:"schema_id" json:"schema_id"`
+	Schema      *Schema                 `db:"-" json:"schema"`
+	UserID      uuid.UUID               `db:"user_id" json:"user_id"`
+	User        *User                   `db:"-" json:"user"`
+	Attributes  []VerificationAttribute `db:"-" json:"attributes"`
 
-	PresentID       *string                 `db:"present_id" json:"present_id"`
-	ConnectionID    *string                 `db:"connection_id" json:"connection_id"`
-	ConnectionURL   *string                 `db:"connection_url" json:"connection_url"`
-	Body            types.JSONText          `db:"body" json:"body"`
-	Attributes      []VerificationAttribute `db:"-" json:"attributes"`
-	Status          VerificationStatusType  `db:"status" json:"status"`
-	ValidationError *string                 `db:"validation_error" json:"validation_error"`
-
-	ConnectionAt *time.Time `db:"connection_at" json:"connection_at"`
-	VerifiedAt   *time.Time `db:"verified_at" json:"verified_at"`
-	UpdatedAt    time.Time  `db:"updated_at" json:"updated_at"`
-	CreatedAt    time.Time  `db:"created_at" json:"created_at"`
+	UpdatedAt time.Time `db:"updated_at" json:"updated_at"`
+	CreatedAt time.Time `db:"created_at" json:"created_at"`
 
 	AttributesJson types.JSONText `db:"attributes" json:"-"`
 	UserJson       types.JSONText `db:"user" json:"-"`
 	SchemaJson     types.JSONText `db:"schema" json:"-"`
+}
+
+type VerificationIndividual struct {
+	ID uuid.UUID `db:"id" json:"id"`
+
+	UserID uuid.UUID `db:"user_id" json:"user_id"`
+	User   *User     `db:"-" json:"user"`
+
+	RecipientID uuid.UUID  `db:"recipient_id" json:"recipient_id"`
+	Recipient   *Recipient `db:"-" json:"recipient"`
+
+	VerificationID uuid.UUID     `db:"verification_id" json:"verification_id"`
+	Verification   *Verification `db:"-" json:"verification"`
+
+	PresentID       *string                `db:"present_id" json:"present_id"`
+	ConnectionID    *string                `db:"connection_id" json:"connection_id"`
+	ConnectionURL   *string                `db:"connection_url" json:"connection_url"`
+	Body            types.JSONText         `db:"body" json:"body"`
+	Status          VerificationStatusType `db:"status" json:"status"`
+	ValidationError *string                `db:"validation_error" json:"validation_error"`
+
+	ConnectionAt     *time.Time     `db:"connection_at" json:"connection_at"`
+	VerifiedAt       *time.Time     `db:"verified_at" json:"verified_at"`
+	UpdatedAt        time.Time      `db:"updated_at" json:"updated_at"`
+	CreatedAt        time.Time      `db:"created_at" json:"created_at"`
+	UserJson         types.JSONText `db:"user" json:"-"`
+	VerificationJson types.JSONText `db:"verification" json:"-"`
+	RecipientJson    types.JSONText `db:"recipient" json:"-"`
 }
 
 type VerificationAttribute struct {
@@ -54,11 +73,19 @@ type VerificationAttribute struct {
 }
 
 func (Verification) TableName() string {
-	return "credential_verifications"
+	return "credential_verificationss"
 }
 
 func (Verification) FetchQuery() string {
-	return "credentials/fetch_verification"
+	return "verifications/fetch"
+}
+
+func (VerificationIndividual) TableName() string {
+	return "credential_individuals"
+}
+
+func (VerificationIndividual) FetchQuery() string {
+	return "verifications/fetch_individual"
 }
 
 func (v *Verification) Create(ctx context.Context) error {
@@ -69,7 +96,7 @@ func (v *Verification) Create(ctx context.Context) error {
 	rows, err := database.TxQuery(
 		ctx,
 		tx,
-		"credentials/create_verification",
+		"verifications/create",
 		v.Name, v.Description, v.UserID, v.SchemaID,
 	)
 	if err != nil {
@@ -89,7 +116,7 @@ func (v *Verification) Create(ctx context.Context) error {
 		v.Attributes[i].SchemaID = v.SchemaID
 	}
 	if len(v.Attributes) > 0 {
-		if _, err := database.TxExecuteQuery(tx, "credentials/create_verification_attributes", v.Attributes); err != nil {
+		if _, err := database.TxExecuteQuery(tx, "verifications/create_attributes", v.Attributes); err != nil {
 			tx.Rollback()
 			return err
 		}
@@ -110,7 +137,7 @@ func (v *Verification) Update(ctx context.Context) error {
 	rows, err := database.TxQuery(
 		ctx,
 		tx,
-		"credentials/update_verification",
+		"verifications/update",
 		v.ID, v.Name, v.Description, v.UserID, v.SchemaID,
 	)
 	if err != nil {
@@ -126,7 +153,7 @@ func (v *Verification) Update(ctx context.Context) error {
 	}
 	rows.Close()
 
-	rows, err = database.TxQuery(ctx, tx, "credentials/delete_verification_attributes", v.ID)
+	rows, err = database.TxQuery(ctx, tx, "verifications/delete_attributes", v.ID)
 	if err != nil {
 		tx.Rollback()
 		return err
@@ -138,7 +165,7 @@ func (v *Verification) Update(ctx context.Context) error {
 		v.Attributes[i].SchemaID = v.SchemaID
 	}
 	if len(v.Attributes) > 0 {
-		if _, err := database.TxExecuteQuery(tx, "credentials/create_verification_attributes", v.Attributes); err != nil {
+		if _, err := database.TxExecuteQuery(tx, "verifications/create_attributes", v.Attributes); err != nil {
 			tx.Rollback()
 			return err
 		}
@@ -149,7 +176,55 @@ func (v *Verification) Update(ctx context.Context) error {
 	return database.Fetch(v, v.ID)
 }
 
-func (v *Verification) NewConnection(ctx context.Context, callback string) error {
+func (v *Verification) Delete(ctx context.Context) error {
+	rows, err := database.Query(ctx, "verifications/delete", v.ID)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+	return nil
+}
+
+func (v *VerificationIndividual) Create(ctx context.Context, customerID string) error {
+	tx, err := database.GetDB().Beginx()
+	if err != nil {
+		return err
+	}
+	r := &Recipient{
+		UserID:     v.UserID,
+		CustomerID: &customerID,
+	}
+	if err := r.Create(ctx); err != nil {
+		tx.Rollback()
+		return err
+	}
+	v.RecipientID = r.ID
+	rows, err := database.TxQuery(
+		ctx,
+		tx,
+		"verifications/create_individual",
+		v.UserID, r.ID, v.VerificationID,
+	)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	defer rows.Close()
+	for rows.Next() {
+		if err := rows.StructScan(v); err != nil {
+			tx.Rollback()
+			return err
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		return err
+	}
+	return database.Fetch(v, v.ID)
+}
+
+func (v *VerificationIndividual) NewConnection(ctx context.Context, callback string) error {
 	if v.Status == StatusVerifRequested {
 		return nil
 	}
@@ -160,7 +235,7 @@ func (v *Verification) NewConnection(ctx context.Context, callback string) error
 	connectURL, _ := url.JoinPath(config.Config.Host, conn.ShortID)
 	rows, err := database.Query(
 		ctx,
-		"credentials/update_connection_verification",
+		"verifications/update_connection",
 		v.ID, conn.ID, connectURL,
 	)
 	if err != nil {
@@ -170,7 +245,7 @@ func (v *Verification) NewConnection(ctx context.Context, callback string) error
 	return database.Fetch(v, v.ID)
 }
 
-func (v *Verification) ProofRequest(ctx context.Context) error {
+func (v *VerificationIndividual) ProofRequest(ctx context.Context) error {
 	if v.ConnectionID == nil {
 		return errors.New("connection not valid")
 	}
@@ -179,7 +254,7 @@ func (v *Verification) ProofRequest(ctx context.Context) error {
 	}
 
 	challenge, _ := json.Marshal(wallet.H{
-		"type": v.Schema.Name,
+		"type": v.Verification.Schema.Name,
 	})
 
 	presentID, err := wallet.ProofRequest(*v.ConnectionID, string(challenge))
@@ -188,7 +263,7 @@ func (v *Verification) ProofRequest(ctx context.Context) error {
 	}
 	rows, err := database.Query(
 		ctx,
-		"credentials/update_present_id_verification",
+		"verifications/update_present_id",
 		v.ID, presentID,
 	)
 	if err != nil {
@@ -198,7 +273,7 @@ func (v *Verification) ProofRequest(ctx context.Context) error {
 	return nil
 }
 
-func (v *Verification) ProofVerify(ctx context.Context) error {
+func (v *VerificationIndividual) ProofVerify(ctx context.Context) error {
 	if v.PresentID == nil {
 		return errors.New("need request proof present first")
 	}
@@ -208,11 +283,11 @@ func (v *Verification) ProofVerify(ctx context.Context) error {
 		return err
 	}
 	vcData, _ := json.Marshal(vc)
-	if len(v.Attributes) > 0 {
-		if err := validateVC(*v.Schema, vc, v.Attributes); err != nil {
+	if len(v.Verification.Attributes) > 0 {
+		if err := validateVC(*v.Verification.Schema, vc, v.Verification.Attributes); err != nil {
 			rows, err := database.Query(
 				ctx,
-				"credentials/update_present_failed_verification",
+				"verifications/update_present_failed",
 				v.ID, vcData, err.Error(),
 			)
 			if err != nil {
@@ -224,7 +299,7 @@ func (v *Verification) ProofVerify(ctx context.Context) error {
 	}
 	rows, err := database.Query(
 		ctx,
-		"credentials/update_present_verify_verification",
+		"verifications/update_present_verify",
 		v.ID, vcData,
 	)
 	if err != nil {
@@ -232,15 +307,6 @@ func (v *Verification) ProofVerify(ctx context.Context) error {
 	}
 	defer rows.Close()
 	return database.Fetch(v, v.ID)
-}
-
-func (v *Verification) Delete(ctx context.Context) error {
-	rows, err := database.Query(ctx, "credentials/delete_verification", v.ID)
-	if err != nil {
-		return err
-	}
-	defer rows.Close()
-	return nil
 }
 
 func GetVerification(id uuid.UUID) (*Verification, error) {
@@ -257,15 +323,6 @@ func GetVerification(id uuid.UUID) (*Verification, error) {
 	return v, nil
 }
 
-func GetVerificationByConnection(connectionID uuid.UUID) (*Verification, error) {
-	v := new(Verification)
-
-	if err := database.Get(v, "credentials/verification_by_connection", connectionID); err != nil {
-		return nil, err
-	}
-	return v, nil
-}
-
 func GetVerifications(userId uuid.UUID, p database.Paginate) ([]Verification, int, error) {
 	var (
 		verifications = []Verification{}
@@ -273,7 +330,46 @@ func GetVerifications(userId uuid.UUID, p database.Paginate) ([]Verification, in
 		ids           []interface{}
 	)
 
-	if err := database.QuerySelect("credentials/get_verifications", &fetchList, userId, p.Limit, p.Offet); err != nil {
+	if err := database.QuerySelect("verifications/get", &fetchList, userId, p.Limit, p.Offet); err != nil {
+		return nil, 0, err
+	}
+
+	if len(fetchList) < 1 {
+		return verifications, 0, nil
+	}
+
+	for _, f := range fetchList {
+		ids = append(ids, f.ID)
+	}
+
+	if err := database.Fetch(&verifications, ids...); err != nil {
+		return nil, 0, err
+	}
+	return verifications, fetchList[0].TotalCount, nil
+}
+
+func GetVerificationsIndividual(id uuid.UUID) (*VerificationIndividual, error) {
+	v := new(VerificationIndividual)
+
+	if err := database.Fetch(v, id); err != nil {
+		return nil, err
+	}
+	verification, err := GetVerification(v.VerificationID)
+	if err != nil {
+		return nil, err
+	}
+	v.Verification = verification
+	return v, nil
+}
+
+func GetVerificationsIndividuals(userId, verificationId uuid.UUID, p database.Paginate) ([]VerificationIndividual, int, error) {
+	var (
+		verifications = []VerificationIndividual{}
+		fetchList     []database.FetchList
+		ids           []interface{}
+	)
+
+	if err := database.QuerySelect("verifications/get_individuals", &fetchList, userId, verificationId, p.Limit, p.Offet); err != nil {
 		return nil, 0, err
 	}
 

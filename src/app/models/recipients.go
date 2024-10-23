@@ -9,12 +9,13 @@ import (
 )
 
 type Recipient struct {
-	ID        uuid.UUID `db:"id" json:"id"`
-	FirstName string    `db:"first_name" json:"first_name"`
-	LastName  string    `db:"last_name" json:"last_name"`
-	Email     string    `db:"email" json:"email"`
-	UserID    uuid.UUID `db:"user_id" json:"user_id"`
-	CreatedAt time.Time `db:"created_at" json:"created_at"`
+	ID         uuid.UUID `db:"id" json:"id"`
+	CustomerID *string   `db:"customer_id" json:"customer_id"`
+	FirstName  *string   `db:"first_name" json:"first_name"`
+	LastName   *string   `db:"last_name" json:"last_name"`
+	Email      *string   `db:"email" json:"email"`
+	UserID     uuid.UUID `db:"user_id" json:"user_id"`
+	CreatedAt  time.Time `db:"created_at" json:"created_at"`
 }
 
 func (Recipient) TableName() string {
@@ -22,14 +23,14 @@ func (Recipient) TableName() string {
 }
 
 func (Recipient) FetchQuery() string {
-	return "credentials/fetch_recipient"
+	return "recipients/fetch"
 }
 
 func (r *Recipient) Create(ctx context.Context) error {
 	rows, err := database.Query(
 		ctx,
-		"credentials/create_recipient",
-		r.FirstName, r.LastName, r.Email, r.UserID,
+		"recipients/create",
+		r.FirstName, r.LastName, r.Email, r.UserID, r.CustomerID,
 	)
 	if err != nil {
 		return err
@@ -46,7 +47,7 @@ func (r *Recipient) Create(ctx context.Context) error {
 func (r *Recipient) Update(ctx context.Context) error {
 	rows, err := database.Query(
 		ctx,
-		"credentials/update_recipient",
+		"recipients/update",
 		r.ID, r.FirstName, r.LastName, r.Email,
 	)
 	if err != nil {
@@ -62,7 +63,7 @@ func (r *Recipient) Update(ctx context.Context) error {
 }
 
 func (r *Recipient) Delete(ctx context.Context) error {
-	rows, err := database.Query(ctx, "credentials/delete_recipient", r.ID)
+	rows, err := database.Query(ctx, "recipients/delete", r.ID)
 	if err != nil {
 		return err
 	}
@@ -87,7 +88,7 @@ func SearchRecipients(query string, userID uuid.UUID, p database.Paginate) ([]Re
 	)
 
 	if err := database.QuerySelect(
-		"credentials/search_recipients",
+		"recipients/search",
 		&fetchList, query, userID, p.Limit, p.Offet); err != nil {
 		return nil, 0, err
 	}

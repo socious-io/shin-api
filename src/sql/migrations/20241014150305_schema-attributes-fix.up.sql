@@ -16,3 +16,8 @@ WHERE name='date_of_birth' AND ca.schema_id IN (SELECT id FROM credential_schema
 DELETE
 FROM credential_attributes ca
 WHERE name='Company' AND ca.schema_id IN (SELECT id FROM credential_schemas WHERE name='Work Certificate' AND public=true);
+
+-- Updating KYC date_of_birth attribute
+UPDATE credential_attributes ca
+SET type='DATETIME'
+WHERE name='date_of_birth' AND ca.schema_id IN (SELECT id FROM credential_schemas WHERE name='KYC' AND public=true);
