@@ -151,8 +151,10 @@ func credentialsGroup(router *gin.Engine) {
 
 		//Sending Email
 		items := map[string]string{
-			"name": cv.Name,
-			"link": fmt.Sprintf("%s/connect/credential/%s", config.Config.FrontHost, cv.ID.String()),
+			"title":      cv.Name,
+			"issuer_org": cv.Organization.Name,
+			"recipient":  fmt.Sprintf("%s %s", cv.Recipient.FirstName, cv.Recipient.LastName),
+			"link":       fmt.Sprintf("%s/connect/credential/%s", config.Config.FrontHost, cv.ID.String()),
 		}
 		services.SendEmail(services.EmailConfig{
 			Approach:    services.EmailApproachTemplate,
