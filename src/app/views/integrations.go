@@ -23,7 +23,7 @@ func integrationGroup(router *gin.Engine) {
 		limit, _ := c.Get("limit")
 		page, _ := c.Get("page")
 
-		integrationKeys, total, err := models.GetAllKeysByUserId(u.(*models.User).ID, paginate.(database.Paginate))
+		integrationKeys, total, err := models.GetIntegrations(u.(*models.User).ID, paginate.(database.Paginate))
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
@@ -60,7 +60,7 @@ func integrationGroup(router *gin.Engine) {
 			return
 		}
 
-		c.JSON(http.StatusOK, integrationKeyCreated)
+		c.JSON(http.StatusCreated, integrationKeyCreated)
 	})
 
 	g.PUT("/keys/:id", func(c *gin.Context) {

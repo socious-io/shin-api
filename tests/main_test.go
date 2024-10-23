@@ -50,6 +50,7 @@ func TestSuite(t *testing.T) {
 var _ = Describe("Shin Test Suite", func() {
 	Context("Ping", pingGroup)
 	Context("Auth", authGroup)
+	Context("Integrations", integrationGroup)
 	Context("Organizations", orgGroup)
 	Context("Schemas", schemaGroup)
 	Context("Verifications", verificationGroup)

@@ -33,6 +33,21 @@ func verificationsGroup(router *gin.Engine) {
 		})
 	})
 
+	g.GET("/:id/individuals", paginate(), auth.LoginRequired(), func(c *gin.Context) {
+		u, _ := c.Get("user")
+		page, _ := c.Get("paginate")
+		id := c.Param("id")
+		verifications, total, err := models.GetVerificationsIndividuals(u.(*models.User).ID, uuid.MustParse(id), page.(database.Paginate))
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{
+			"results": verifications,
+			"total":   total,
+		})
+	})
+
 	g.GET("/:id", auth.LoginRequired(), func(c *gin.Context) {
 		id := c.Param("id")
 		v, err := models.GetVerification(uuid.MustParse(id))
@@ -43,9 +58,37 @@ func verificationsGroup(router *gin.Engine) {
 		c.JSON(http.StatusOK, v)
 	})
 
+	g.GET("/individuals/:id", auth.LoginRequired(), func(c *gin.Context) {
+		id := c.Param("id")
+		v, err := models.GetVerificationsIndividual(uuid.MustParse(id))
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusOK, v)
+	})
+
+	g.POST("individuals", auth.AuthRequired(), func(c *gin.Context) {
+		form := new(VerificationIndividualForm)
+		if err := c.ShouldBindJSON(form); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		v := new(models.VerificationIndividual)
+		u, _ := c.Get("user")
+		v.UserID = u.(*models.User).ID
+		v.VerificationID = form.VerificationID
+		ctx, _ := c.Get("ctx")
+		if err := v.Create(ctx.(context.Context), form.CustomerID); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusCreated, v)
+	})
+
 	g.GET("/:id/connect", func(c *gin.Context) {
 		id := c.Param("id")
-		v, err := models.GetVerification(uuid.MustParse(id))
+		v, err := models.GetVerificationsIndividual(uuid.MustParse(id))
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
@@ -70,7 +113,7 @@ func verificationsGroup(router *gin.Engine) {
 
 	g.GET("/:id/callback", func(c *gin.Context) {
 		id := c.Param("id")
-		v, err := models.GetVerification(uuid.MustParse(id))
+		v, err := models.GetVerificationsIndividual(uuid.MustParse(id))
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
@@ -87,7 +130,7 @@ func verificationsGroup(router *gin.Engine) {
 
 	g.GET("/:id/verify", func(c *gin.Context) {
 		id := c.Param("id")
-		v, err := models.GetVerification(uuid.MustParse(id))
+		v, err := models.GetVerificationsIndividual(uuid.MustParse(id))
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
@@ -132,10 +175,6 @@ func verificationsGroup(router *gin.Engine) {
 		if v.UserID.String() != u.(*models.User).ID.String() {
 			c.JSON(http.StatusForbidden, gin.H{"error": "not allow"})
 			return
-		}
-
-		if v.VerifiedAt != nil {
-			form.SchemaID = v.SchemaID
 		}
 		utils.Copy(form, v)
 
