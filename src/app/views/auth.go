@@ -465,36 +465,36 @@ func authGroup(router *gin.Engine) {
 
 	})
 
-	g.POST("/socious/set-password", auth.LoginRequired(), func(c *gin.Context) {
-		u, _ := c.Get("user")
-		ctx, _ := c.Get("ctx")
+	// g.POST("/socious/set-password", auth.LoginRequired(), func(c *gin.Context) {
+	// 	u, _ := c.Get("user")
+	// 	ctx, _ := c.Get("ctx")
 
-		user := u.(*models.User)
+	// 	user := u.(*models.User)
 
-		form := new(auth.DirectPasswordChangeForm)
-		if err := c.ShouldBindJSON(form); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			return
-		}
+	// 	form := new(auth.DirectPasswordChangeForm)
+	// 	if err := c.ShouldBindJSON(form); err != nil {
+	// 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	// 		return
+	// 	}
 
-		if user.Password == nil {
-			password, err := auth.HashPassword(form.Password)
-			user.Password = &password
-			if err != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-				return
-			}
-			if err := user.UpdatePassword(ctx.(context.Context)); err != nil {
-				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-				return
-			}
-			c.JSON(http.StatusCreated, gin.H{"message": "success"})
-			return
-		}
+	// 	if user.Password == nil {
+	// 		password, err := auth.HashPassword(form.Password)
+	// 		user.Password = &password
+	// 		if err != nil {
+	// 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+	// 			return
+	// 		}
+	// 		if err := user.UpdatePassword(ctx.(context.Context)); err != nil {
+	// 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	// 			return
+	// 		}
+	// 		c.JSON(http.StatusCreated, gin.H{"message": "success"})
+	// 		return
+	// 	}
 
-		c.JSON(http.StatusBadRequest, gin.H{"error": "user already has a password"})
-		return
+	// 	c.JSON(http.StatusBadRequest, gin.H{"error": "user already has a password"})
+	// 	return
 
-	})
+	// })
 
 }
