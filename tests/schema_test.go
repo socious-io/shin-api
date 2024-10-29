@@ -13,9 +13,7 @@ import (
 )
 
 func schemaGroup() {
-	if focused && !authExecuted {
-		authGroup()
-	}
+
 	It("it should create schema", func() {
 		for i, data := range schemasData {
 			w := httptest.NewRecorder()

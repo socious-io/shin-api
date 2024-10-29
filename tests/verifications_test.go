@@ -13,9 +13,7 @@ import (
 )
 
 func verificationGroup() {
-	if focused {
-		schemaGroup()
-	}
+
 	It("it should create verification", func() {
 		for i, data := range verificationsData {
 			w := httptest.NewRecorder()
@@ -63,14 +61,30 @@ func verificationGroup() {
 		}
 	})
 
+	It("it should create verification individual", func() {
+		for i, data := range verificationsData {
+			w := httptest.NewRecorder()
+			reqBody, _ := json.Marshal(gin.H{
+				"customer_id":     fmt.Sprintf("customer_%d", i),
+				"verification_id": data["id"],
+			})
+			req, _ := http.NewRequest("POST", "/verifications/individuals", bytes.NewBuffer(reqBody))
+			req.Header.Set("apikey", intKey)
+			router.ServeHTTP(w, req)
+			body := decodeBody(w.Body)
+			verificationsData[i]["individual"] = body["id"]
+			Expect(w.Code).To(Equal(201))
+		}
+	})
+
 	/* It("it should get verification with connection", func() {
 		for _, data := range verificationsData {
 			w := httptest.NewRecorder()
-			req, _ := http.NewRequest("GET", fmt.Sprintf("/verifications/%s/connect", data["id"]), nil)
+			req, _ := http.NewRequest("GET", fmt.Sprintf("/verifications/%s/connect", data["individual"]), nil)
 			req.Header.Set("Authorization", authTokens[0])
 			router.ServeHTTP(w, req)
 			body := decodeBody(w.Body)
-			Expect(body["id"]).To(Equal(data["id"]))
+			Expect(body["individual"]).To(Equal(data["id"]))
 			// Expect(body["connection_url"]).To(Not(nil))
 			Expect(w.Code).To(Equal(200))
 		}
