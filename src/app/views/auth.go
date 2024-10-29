@@ -445,18 +445,16 @@ func authGroup(router *gin.Engine) {
 				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 				return
 			}
+			if err := newUser.ExpirePassword(ctx.(context.Context)); err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+				return
+			}
 			user = newUser
 		} else {
 			user = u.(*models.User)
 		}
 
 		tokens, err := auth.GenerateFullTokens(user.ID.String())
-
-		if user.Password != nil {
-			tokens["status"] = "COMPLETED"
-		} else {
-			tokens["status"] = "PASSWORD_NOT_SET"
-		}
 
 		if err != nil {
 			c.JSON(http.StatusBadRequest, tokens)
