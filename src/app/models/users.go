@@ -14,7 +14,7 @@ type User struct {
 	Email     string     `db:"email" json:"email"`
 	Password  *string    `db:"password" json:"-"`
 	JobTitle  *string    `db:"job_title" json:"job_title"`
-	Bio       *string    `db:"bio" json:"-"`
+	Bio       *string    `db:"bio" json:"bio"`
 	FirstName *string    `db:"first_name" json:"first_name"`
 	LastName  *string    `db:"last_name" json:"last_name"`
 	Phone     *string    `db:"phone" json:"phone"`
