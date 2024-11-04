@@ -177,7 +177,7 @@ func credentialsGroup(router *gin.Engine) {
 			return
 		}
 		if schema.IssueDisabled {
-			c.JSON(http.StatusBadRequest, gin.H{"error4": "schema for issuing credentials is disabled"})
+			c.JSON(http.StatusBadRequest, gin.H{"error": "schema for issuing credentials is disabled"})
 			return
 		}
 		cv := new(models.Credential)
