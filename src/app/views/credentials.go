@@ -189,7 +189,6 @@ func credentialsGroup(router *gin.Engine) {
 		}
 		utils.Copy(form.Credential, cv)
 		cv.OrganizationID = orgs[0].ID
-		fmt.Println(r.ID)
 		cv.RecipientID = &r.ID
 		claims := gin.H{}
 		for _, claim := range form.Credential.Claims {
