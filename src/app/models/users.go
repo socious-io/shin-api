@@ -39,11 +39,10 @@ func (User) FetchQuery() string {
 
 func (u *User) Create(ctx context.Context) error {
 
-	passwordExpired := u.Password == nil
 	rows, err := database.Query(
 		ctx,
 		"users/register",
-		u.FirstName, u.LastName, u.Username, u.Email, u.Password, passwordExpired,
+		u.FirstName, u.LastName, u.Username, u.Email, u.Password,
 	)
 	if err != nil {
 		return err
