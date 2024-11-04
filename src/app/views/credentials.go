@@ -150,7 +150,7 @@ func credentialsGroup(router *gin.Engine) {
 		}
 
 		//Sending Email
-		if cv.Recipient.Email != nil {
+		if cv.Recipient != nil && cv.Recipient.Email != nil {
 			items := map[string]string{
 				"title":      cv.Name,
 				"issuer_org": cv.Organization.Name,
