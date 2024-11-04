@@ -425,10 +425,10 @@ func authGroup(router *gin.Engine) {
 		//Castings
 		ssoClaims := tokenClaims.(auth.SSOClaims)
 		var user *models.User
+		isUserRegistered := false
 
 		//If user doesn't exist, it needs to be registered
 		if u == nil {
-			//
 			newUser := &models.User{
 				Email:     *ssoClaims.Email,
 				FirstName: ssoClaims.FirstName,
@@ -445,18 +445,15 @@ func authGroup(router *gin.Engine) {
 				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 				return
 			}
+
 			user = newUser
+			isUserRegistered = true
 		} else {
 			user = u.(*models.User)
 		}
 
 		tokens, err := auth.GenerateFullTokens(user.ID.String())
-
-		if user.Password != nil {
-			tokens["status"] = "COMPLETED"
-		} else {
-			tokens["status"] = "PASSWORD_NOT_SET"
-		}
+		tokens["registered"] = isUserRegistered
 
 		if err != nil {
 			c.JSON(http.StatusBadRequest, tokens)
