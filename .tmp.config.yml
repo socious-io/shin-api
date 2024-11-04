@@ -10,12 +10,9 @@ database:
   sqldir: src/sql
   migrations: src/sql/migrations
 sendgrid:
+  disabled: "[true/false]"
   url: "url"
   api_key: "api_key"
-  templates:
-    otp: template_id
-    forget-password: template_id
-    credentials-recipients: template_id
 s3:
   access_key_id: access_key_id
   secret_access_key: secret_access_key

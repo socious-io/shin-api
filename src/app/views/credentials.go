@@ -150,19 +150,21 @@ func credentialsGroup(router *gin.Engine) {
 		}
 
 		//Sending Email
-		items := map[string]string{
-			"title":      cv.Name,
-			"issuer_org": cv.Organization.Name,
-			"recipient":  fmt.Sprintf("%s %s", cv.Recipient.FirstName, cv.Recipient.LastName),
-			"link":       fmt.Sprintf("%s/connect/credential/%s", config.Config.FrontHost, cv.ID.String()),
+		if cv.Recipient.Email != nil {
+			items := map[string]string{
+				"title":      cv.Name,
+				"issuer_org": cv.Organization.Name,
+				"recipient":  fmt.Sprintf("%s %s", *cv.Recipient.FirstName, *cv.Recipient.LastName),
+				"link":       fmt.Sprintf("%s/connect/credential/%s", config.Config.FrontHost, cv.ID.String()),
+			}
+			services.SendEmail(services.EmailConfig{
+				Approach:    services.EmailApproachTemplate,
+				Destination: *cv.Recipient.Email,
+				Title:       "Shin - Your verification credentials",
+				Template:    "credentials-recipients",
+				Args:        items,
+			})
 		}
-		services.SendEmail(services.EmailConfig{
-			Approach:    services.EmailApproachTemplate,
-			Destination: cv.Recipient.Email,
-			Title:       "Shin - Your verification credentials",
-			Template:    "credentials-recipients",
-			Args:        items,
-		})
 
 		c.JSON(http.StatusCreated, cv)
 	})
