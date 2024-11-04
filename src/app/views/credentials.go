@@ -184,7 +184,7 @@ func credentialsGroup(router *gin.Engine) {
 		cv.CreatedID = u.(*models.User).ID
 		orgs, err := models.GetOrgsByMember(cv.CreatedID)
 		if err != nil || len(orgs) < 1 {
-			c.JSON(http.StatusBadRequest, gin.H{"error5": fmt.Sprintf("fetching org error :%v", err)})
+			c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("fetching org error :%v", err)})
 			return
 		}
 		utils.Copy(form.Credential, cv)
