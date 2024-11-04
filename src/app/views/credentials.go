@@ -150,6 +150,61 @@ func credentialsGroup(router *gin.Engine) {
 		c.JSON(http.StatusCreated, cv)
 	})
 
+	g.POST("/with-recipient", auth.LoginRequired(), func(c *gin.Context) {
+
+		u, _ := c.Get("user")
+		ctx, _ := c.Get("ctx")
+
+		form := new(CredentialRecipientForm)
+		if err := c.ShouldBindJSON(form); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error1": err.Error()})
+			return
+		}
+
+		//Creating Recipient
+		r := new(models.Recipient)
+		utils.Copy(form.Recipient, r)
+		r.UserID = u.(*models.User).ID
+		if err := r.Create(ctx.(context.Context)); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error2": err.Error()})
+			return
+		}
+
+		//Creating Credential
+		schema, err := models.GetSchema(form.Credential.SchemaID)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error3": err.Error()})
+			return
+		}
+		if schema.IssueDisabled {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "schema for issuing credentials is disabled"})
+			return
+		}
+		cv := new(models.Credential)
+		cv.CreatedID = u.(*models.User).ID
+		orgs, err := models.GetOrgsByMember(cv.CreatedID)
+		if err != nil || len(orgs) < 1 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("fetching org error :%v", err)})
+			return
+		}
+		utils.Copy(form.Credential, cv)
+		cv.OrganizationID = orgs[0].ID
+		cv.RecipientID = &r.ID
+		claims := gin.H{}
+		for _, claim := range form.Credential.Claims {
+			claims[claim.Name] = claim.Value
+		}
+		claims["type"] = schema.Name
+		claims["issued_date"] = time.Now().Format(time.RFC3339)
+		claims["company_name"] = orgs[0].Name
+		cv.Claims, _ = json.Marshal(&claims)
+		if err := cv.Create(ctx.(context.Context)); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusCreated, cv)
+	})
+
 	g.PUT("/:id", auth.LoginRequired(), func(c *gin.Context) {
 		form := new(CredentialForm)
 		if err := c.ShouldBindJSON(form); err != nil {

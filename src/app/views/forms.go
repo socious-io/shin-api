@@ -58,6 +58,11 @@ type RecipientForm struct {
 	Email     string `json:"email" validate:"required,email"`
 }
 
+type CredentialRecipientForm struct {
+	Credential CredentialForm `json:"credential"`
+	Recipient  RecipientForm  `json:"recipient"`
+}
+
 type ProfileUpdateForm struct {
 	Username  *string    `json:"username" validate:"required,min=3,max=32"`
 	JobTitle  *string    `json:"job_title"`
