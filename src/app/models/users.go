@@ -38,7 +38,6 @@ func (User) FetchQuery() string {
 }
 
 func (u *User) Create(ctx context.Context) error {
-
 	rows, err := database.Query(
 		ctx,
 		"users/register",
