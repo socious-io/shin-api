@@ -157,7 +157,7 @@ func credentialsGroup(router *gin.Engine) {
 
 		form := new(CredentialRecipientForm)
 		if err := c.ShouldBindJSON(form); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error1": err.Error()})
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
 
@@ -166,14 +166,14 @@ func credentialsGroup(router *gin.Engine) {
 		utils.Copy(form.Recipient, r)
 		r.UserID = u.(*models.User).ID
 		if err := r.Create(ctx.(context.Context)); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error2": err.Error()})
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
 
 		//Creating Credential
 		schema, err := models.GetSchema(form.Credential.SchemaID)
 		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error3": err.Error()})
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
 		if schema.IssueDisabled {
