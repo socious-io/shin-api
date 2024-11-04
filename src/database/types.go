@@ -8,9 +8,15 @@ type Model interface {
 	FetchQuery() string
 }
 
+type Filter struct {
+	Key   string
+	Value string
+}
+
 type Paginate struct {
-	Limit int
-	Offet int
+	Limit   int
+	Offet   int
+	Filters []Filter
 }
 
 type FetchList struct {

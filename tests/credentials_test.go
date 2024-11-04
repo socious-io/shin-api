@@ -85,6 +85,17 @@ func credentialGroup() {
 		Expect(w.Code).To(Equal(200))
 	})
 
+	It("it should get credentials by schema", func() {
+		w := httptest.NewRecorder()
+		schemaId := credentialsData[0]["schema_id"]
+		req, _ := http.NewRequest("GET", fmt.Sprintf("/credentials?schema=%s", schemaId), nil)
+		req.Header.Set("Authorization", authTokens[0])
+		router.ServeHTTP(w, req)
+		body := decodeBody(w.Body)
+		Expect(len(body["results"].([]interface{}))).To(Equal(len(credentialsData)))
+		Expect(w.Code).To(Equal(200))
+	})
+
 	It("it should delete credential", func() {
 		for _, data := range credentialsData {
 			w := httptest.NewRecorder()
