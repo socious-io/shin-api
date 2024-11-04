@@ -192,7 +192,7 @@ func GetCredentials(userId uuid.UUID, p database.Paginate) ([]Credential, int, e
 	)
 
 	// TODO: it's temperory solution database.QuerySelect must handle filtering system
-	if len(p.Filters) > 0 && p.Filters[0].Key == "schema" {
+	if len(p.Filters) > 0 && p.Filters[0].Key == "schema_id" {
 		if err := database.QuerySelect("credentials/get_by_schema", &fetchList, userId, p.Limit, p.Offet, p.Filters[0].Value); err != nil {
 			return nil, 0, err
 		}
