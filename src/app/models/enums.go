@@ -128,3 +128,49 @@ func (o *KybVerificationStatusType) Scan(value interface{}) error {
 func (o KybVerificationStatusType) Value() (driver.Value, error) {
 	return string(o), nil
 }
+
+type CSVImportDocType string
+
+const (
+	CSVDocTypeCredentials CSVImportDocType = "CREDENTIALS"
+)
+
+func (o *CSVImportDocType) Scan(value interface{}) error {
+	switch v := value.(type) {
+	case []byte:
+		*o = CSVImportDocType(string(v))
+	case string:
+		*o = CSVImportDocType(v)
+	default:
+		return fmt.Errorf("failed to scan operator type: %v", value)
+	}
+	return nil
+}
+
+func (o CSVImportDocType) Value() (driver.Value, error) {
+	return string(o), nil
+}
+
+type CSVImportStatus string
+
+const (
+	CSVStatusInitiated        CSVImportStatus = "INITIATED"
+	CSVStatusValidationFailed CSVImportStatus = "VALIDATION_FAILED"
+	CSVStatusDone             CSVImportStatus = "DONE"
+)
+
+func (o *CSVImportStatus) Scan(value interface{}) error {
+	switch v := value.(type) {
+	case []byte:
+		*o = CSVImportStatus(string(v))
+	case string:
+		*o = CSVImportStatus(v)
+	default:
+		return fmt.Errorf("failed to scan operator type: %v", value)
+	}
+	return nil
+}
+
+func (o CSVImportStatus) Value() (driver.Value, error) {
+	return string(o), nil
+}
