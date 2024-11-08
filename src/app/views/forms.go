@@ -24,9 +24,10 @@ type SchemaForm struct {
 }
 
 type VerificationForm struct {
-	Name        string    `json:"name" validate:"required,min=3,max=32"`
-	Description *string   `json:"description" validate:"required,min=3"`
-	SchemaID    uuid.UUID `json:"schema_id" validate:"required"`
+	Name        string                  `json:"name" validate:"required,min=3,max=32"`
+	Description *string                 `json:"description" validate:"required,min=3"`
+	SchemaID    uuid.UUID               `json:"schema_id" validate:"required"`
+	Type        models.VerificationType `json:"type" validate:"required"`
 	Attributes  []struct {
 		AttributeID uuid.UUID                       `json:"attribute_id"`
 		Operator    models.VerificationOperatorType `json:"operator"`

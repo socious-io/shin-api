@@ -296,11 +296,11 @@ func UnmarshalJSONTextFields(input interface{}) error {
 
 				// Ensure that the target field is a struct pointer and not the JSONText itself
 				if targetField.Kind() == reflect.Ptr && targetFieldType.Type.Kind() == reflect.Ptr {
-					targetField.Set(reflect.New(targetFieldType.Type.Elem())) // Initialize the struct pointer
 					data := []byte(field.Interface().(types.JSONText))
 					if len(data) < 1 {
 						continue
 					}
+					targetField.Set(reflect.New(targetFieldType.Type.Elem())) // Initialize the struct pointer
 					data = preprocessJSONDatetimes(data)
 					// Unmarshal into the corresponding field
 					if err := json.Unmarshal(data, targetField.Interface()); err != nil {

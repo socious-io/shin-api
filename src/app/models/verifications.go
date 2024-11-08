@@ -25,6 +25,8 @@ type Verification struct {
 	UserID      uuid.UUID               `db:"user_id" json:"user_id"`
 	User        *User                   `db:"-" json:"user"`
 	Attributes  []VerificationAttribute `db:"-" json:"attributes"`
+	Type        VerificationType        `db:"type" json:"type"`
+	Single      *VerificationIndividual `db:"-" json:"single"`
 
 	UpdatedAt time.Time `db:"updated_at" json:"updated_at"`
 	CreatedAt time.Time `db:"created_at" json:"created_at"`
@@ -32,6 +34,7 @@ type Verification struct {
 	AttributesJson types.JSONText `db:"attributes" json:"-"`
 	UserJson       types.JSONText `db:"user" json:"-"`
 	SchemaJson     types.JSONText `db:"schema" json:"-"`
+	SingleJson     types.JSONText `db:"single" json:"-"`
 }
 
 type VerificationIndividual struct {
@@ -97,19 +100,19 @@ func (v *Verification) Create(ctx context.Context) error {
 		ctx,
 		tx,
 		"verifications/create",
-		v.Name, v.Description, v.UserID, v.SchemaID,
+		v.Name, v.Description, v.UserID, v.SchemaID, v.Type,
 	)
 	if err != nil {
 		tx.Rollback()
 		return err
 	}
-	defer rows.Close()
 	for rows.Next() {
 		if err := rows.StructScan(v); err != nil {
 			tx.Rollback()
 			return err
 		}
 	}
+	rows.Close()
 
 	for i := range v.Attributes {
 		v.Attributes[i].VerificationID = v.ID
@@ -120,6 +123,29 @@ func (v *Verification) Create(ctx context.Context) error {
 			tx.Rollback()
 			return err
 		}
+	}
+	if v.Type == VerificationSingle {
+		noneCustomerID := "Any"
+
+		r := &Recipient{
+			UserID:     v.UserID,
+			CustomerID: &noneCustomerID,
+		}
+		if err := r.Create(ctx); err != nil {
+			tx.Rollback()
+			return err
+		}
+		rows, err = database.TxQuery(
+			ctx,
+			tx,
+			"verifications/create_individual",
+			v.UserID, r.ID, v.ID,
+		)
+		if err != nil {
+			tx.Rollback()
+			return err
+		}
+		rows.Close()
 	}
 
 	if err := tx.Commit(); err != nil {
