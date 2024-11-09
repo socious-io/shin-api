@@ -8,6 +8,7 @@ import (
 	"shin/src/database"
 	"shin/src/lib"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -34,7 +35,7 @@ func paginate() gin.HandlerFunc {
 		}
 		filters := make([]database.Filter, 0)
 		for key, values := range c.Request.URL.Query() {
-			if key != "page" && key != "limit" && len(values) > 0 {
+			if strings.Contains(key, "filter.") && len(values) > 0 {
 				filters = append(filters, database.Filter{
 					Key:   key,
 					Value: values[0],
