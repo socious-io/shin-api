@@ -37,7 +37,7 @@ func paginate() gin.HandlerFunc {
 		for key, values := range c.Request.URL.Query() {
 			if strings.Contains(key, "filter.") && len(values) > 0 {
 				filters = append(filters, database.Filter{
-					Key:   key,
+					Key:   strings.Replace(key, "filter.", "", -1),
 					Value: values[0],
 				})
 			}
