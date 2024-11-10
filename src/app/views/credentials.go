@@ -336,4 +336,23 @@ func credentialsGroup(router *gin.Engine) {
 			"message": "success",
 		})
 	})
+
+	g.DELETE("", auth.LoginRequired(), func(c *gin.Context) {
+		ctx, _ := c.Get("ctx")
+		u, _ := c.Get("user")
+
+		form := new(CredentialBulkDeleteForm)
+		if err := c.ShouldBindJSON(form); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+
+		if err := models.CredentialsBulkDelete(ctx.(context.Context), form.Credentials, u.(*models.User).ID); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{
+			"message": "success",
+		})
+	})
 }

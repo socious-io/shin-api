@@ -53,6 +53,10 @@ type CredentialForm struct {
 	Claims      []Claim   `json:"claims" validate:"required"`
 }
 
+type CredentialBulkDeleteForm struct {
+	Credentials []uuid.UUID `json:"credentials" validate:"required"`
+}
+
 type RecipientForm struct {
 	FirstName string `json:"first_name" validate:"required,min=3,max=128"`
 	LastName  string `json:"last_name" validate:"required,min=3,max=128"`

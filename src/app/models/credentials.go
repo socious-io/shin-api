@@ -12,6 +12,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx/types"
+	"github.com/lib/pq"
 )
 
 type Credential struct {
@@ -214,4 +215,13 @@ func GetCredentials(userId uuid.UUID, p database.Paginate) ([]Credential, int, e
 		return nil, 0, err
 	}
 	return credentials, fetchList[0].TotalCount, nil
+}
+
+func CredentialsBulkDelete(ctx context.Context, ids []uuid.UUID, createdId uuid.UUID) error {
+	rows, err := database.Query(ctx, "credentials/delete_bulk", pq.Array(ids), createdId)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+	return nil
 }
