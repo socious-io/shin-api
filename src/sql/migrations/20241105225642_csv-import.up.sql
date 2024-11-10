@@ -1,5 +1,5 @@
 CREATE TYPE csv_import_doc_type AS ENUM ('CREDENTIALS');
-CREATE TYPE csv_import_status AS ENUM ('INITIATED', 'VALIDATION_FAILED', 'DONE');
+CREATE TYPE csv_import_status AS ENUM ('DONE', 'FAILED');
 
 CREATE TABLE csv_imports (
   id UUID NOT NULL DEFAULT public.uuid_generate_v4() PRIMARY KEY,

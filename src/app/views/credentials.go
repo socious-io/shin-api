@@ -228,22 +228,22 @@ func credentialsGroup(router *gin.Engine) {
 	g.POST("/import", auth.LoginRequired(), func(c *gin.Context) {
 
 		u, _ := c.Get("user")
-		ctx, _ := c.Get("ctx")
 		user := u.(*models.User)
 
-		form := new(CredentialImportForm)
-		if err := c.ShouldBindJSON(form); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		file, _, err := c.Request.FormFile("file")
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"error":   err.Error(),
+				"message": "Couldn't upload media",
+			})
 			return
 		}
+		defer file.Close()
 
-		m, _ := models.GetMedia(form.DocumentID)
-		ci := models.CSVImport{
-			UserID:  user.ID,
-			DocType: models.CSVDocTypeCredentials,
-			Status:  models.CSVStatusInitiated,
-		}
-		schema, err := models.GetSchema(form.SchemaID)
+		SchemaID := c.Request.FormValue("schema_id")
+
+		// Fetching Schema
+		schema, err := models.GetSchema(uuid.MustParse(SchemaID))
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
@@ -253,70 +253,34 @@ func credentialsGroup(router *gin.Engine) {
 			return
 		}
 
-		schemaAttributes := []string{} //initially adding validation for recipient
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			return
-		}
-
+		schemaAttributes := map[string]string{}
 		for _, attributes := range schema.Attributes {
-			schemaAttributes = append(schemaAttributes, attributes.Name)
+			schemaAttributes[attributes.Name] = string(attributes.Type)
 		}
-		schemaAttributes = utils.AppendIfNotExists(schemaAttributes, "first_name")
-		schemaAttributes = utils.AppendIfNotExists(schemaAttributes, "last_name")
-		schemaAttributes = utils.AppendIfNotExists(schemaAttributes, "email")
+		schemaAttributes["first_name"] = string(models.Text)
+		schemaAttributes["last_name"] = string(models.Text)
+		schemaAttributes["email"] = string(models.Email)
 
-		if err := ci.Create(ctx.(context.Context)); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			return
-		}
-		c.JSON(http.StatusCreated, ci)
+		//Processing CSV file
+		resultChan, errChan := make(chan bool), make(chan error)
 
-		//Processing CSV-file
-		go func() {
+		go lib.ValidateCSVFile(file, schemaAttributes, resultChan, errChan)
 
-			ctx := context.Background()
-
-			result, err := lib.ProcessCSVFromUrl(m.URL, schemaAttributes)
-
-			if err != nil {
-				error := err.Error()
-				ci.Status = models.CSVStatusValidationFailed
-				ci.Reason = &error
-
-				err := ci.Update(ctx.(context.Context))
-				if err != nil {
-					fmt.Println(err)
-				}
-				return
-			}
-
-			ci.Data, _ = json.Marshal(&result)
-			ci.Update(ctx.(context.Context))
-
-			services.SendCSVImport(services.CSVImportConfig{
-				RecordID: ci.ID,
-				DocType:  models.CSVDocTypeCredentials,
-				Meta: map[string]any{
+		for {
+			select {
+			case _ = <-resultChan:
+				c.JSON(http.StatusCreated, gin.H{"message": "success"})
+				go services.InitiateCSVImport(file, map[string]any{
 					"schema_id": schema.ID,
 					"user_id":   user.ID,
-				},
-			})
-
-		}()
-
-	})
-
-	g.GET("/import/:id", auth.LoginRequired(), func(c *gin.Context) {
-		id := c.Param("id")
-
-		ci, err := models.GetCSVImport(uuid.MustParse(id))
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			return
+				})
+				return
+			case err := <-errChan:
+				c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+				return
+			}
 		}
 
-		c.JSON(http.StatusOK, ci)
 	})
 
 	g.PUT("/:id", auth.LoginRequired(), func(c *gin.Context) {

@@ -11,9 +11,10 @@ import (
 	"github.com/google/uuid"
 )
 
-func ImportCredentials(recordId uuid.UUID, meta map[string]any) error {
-
-	//check if user has orgs
+/*
+Importing Functions ( We can have multiple import functions here )
+*/
+func ImportCredentials(record map[string]string, meta map[string]any) error {
 
 	//TODO: should we import:
 	// Name        string    `json:"name" validate:"required,min=3,max=32"` // Credential name
@@ -24,60 +25,55 @@ func ImportCredentials(recordId uuid.UUID, meta map[string]any) error {
 	u, _ := models.GetUser(user_id)
 	ctx := context.Background()
 
-	ci, _ := models.GetCSVImport(recordId)
 	var import_error error = nil
 
-	var fields []map[string]string
-	json.Unmarshal(ci.Data, &fields)
+	//Extract recipient info and create it
+	FirstName, LastName, Email := record["first_name"], record["last_name"], record["email"]
+	r := models.Recipient{
+		FirstName: &FirstName,
+		LastName:  &LastName,
+		Email:     &Email,
+		UserID:    u.ID,
+	}
+	r.UserID = u.ID
+	if err := r.Create(ctx.(context.Context)); err != nil {
+		import_error = err
+	}
+	delete(record, "first_name")
+	delete(record, "last_name")
+	delete(record, "email")
 
-	for _, record := range fields {
+	//Creating Credential
+	cv := models.Credential{
+		CreatedID:   u.ID,
+		RecipientID: &r.ID,
+		SchemaID:    s.ID,
+	}
 
-		//Extract recipient info and create it
-		FirstName, LastName, Email := record["first_name"], record["last_name"], record["email"]
-		r := models.Recipient{
-			FirstName: &FirstName,
-			LastName:  &LastName,
-			Email:     &Email,
-			UserID:    u.ID,
-		}
-		r.UserID = u.ID
-		if err := r.Create(ctx.(context.Context)); err != nil {
-			import_error = err
-			break
-		}
-		delete(record, "first_name")
-		delete(record, "last_name")
-		delete(record, "email")
+	//Organization
+	orgs, err := models.GetOrgsByMember(cv.CreatedID)
+	if err != nil || len(orgs) < 1 {
+		import_error = fmt.Errorf("fetching org error :%v", err)
+	}
+	cv.OrganizationID = orgs[0].ID
 
-		//Creating Credential
-		cv := models.Credential{
-			CreatedID:   u.ID,
-			RecipientID: &r.ID,
-			SchemaID:    s.ID,
-		}
+	//Claims
+	claims := gin.H{}
+	for key, claim := range record {
+		claims[key] = claim
+	}
+	claims["type"] = s.Name
+	claims["issued_date"] = time.Now().Format(time.RFC3339)
+	claims["company_name"] = orgs[0].Name
+	cv.Claims, _ = json.Marshal(&claims)
 
-		//Organization
-		orgs, err := models.GetOrgsByMember(cv.CreatedID)
-		if err != nil || len(orgs) < 1 {
-			import_error = fmt.Errorf("fetching org error :%v", err)
-			break
-		}
-		cv.OrganizationID = orgs[0].ID
+	if err := cv.Create(ctx.(context.Context)); err != nil {
+		import_error = err
+	}
 
-		//Claims
-		claims := gin.H{}
-		for key, claim := range record {
-			claims[key] = claim
-		}
-		claims["type"] = s.Name
-		claims["issued_date"] = time.Now().Format(time.RFC3339)
-		claims["company_name"] = orgs[0].Name
-		cv.Claims, _ = json.Marshal(&claims)
-
-		if err := cv.Create(ctx.(context.Context)); err != nil {
-			import_error = err
-			break
-		}
+	ci := models.CSVImport{
+		DocType: models.CSVDocTypeCredentials,
+		UserID:  user_id,
 	}
 
 	if import_error != nil {
@@ -85,10 +81,15 @@ func ImportCredentials(recordId uuid.UUID, meta map[string]any) error {
 		ci.Status = models.CSVStatusValidationFailed
 		ci.Reason = &err_str
 	} else {
+		import_date, _ := json.Marshal(cv)
 		ci.Status = models.CSVStatusDone
+		ci.Data = import_date
+	}
+	err = ci.Create(ctx.(context.Context))
+	if err != nil {
+		fmt.Println(err.Error())
 	}
 
-	ci.Update(ctx.(context.Context))
 	return import_error
 
 }

@@ -32,50 +32,24 @@ func (ci *CSVImport) Scan(rows *sqlx.Rows) error {
 	return rows.StructScan(ci)
 }
 
-func (ic *CSVImport) Create(ctx context.Context) error {
+func (ci *CSVImport) Create(ctx context.Context) error {
 
 	rows, err := database.Query(
 		ctx,
 		"csv_imports/create",
-		ic.UserID, ic.DocType,
+		ci.UserID, ci.DocType, ci.Data, ci.Status, ci.Reason,
 	)
+
 	if err != nil {
 		return err
 	}
 
 	defer rows.Close()
 	for rows.Next() {
-		if err := ic.Scan(rows); err != nil {
+		if err := ci.Scan(rows); err != nil {
 			return err
 		}
 	}
-	return nil
-}
-
-func (ic *CSVImport) Update(ctx context.Context) error {
-	rows, err := database.Query(
-		ctx,
-		"csv_imports/update",
-		ic.ID, ic.UserID, ic.Status, ic.Reason, ic.Data,
-	)
-	if err != nil {
-		return err
-	}
-	defer rows.Close()
-	for rows.Next() {
-		if err := rows.StructScan(ic); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (ic *CSVImport) Delete(ctx context.Context) error {
-	rows, err := database.Query(ctx, "csv_imports/delete", ic.ID, ic.UserID)
-	if err != nil {
-		return err
-	}
-	defer rows.Close()
 	return nil
 }
 
