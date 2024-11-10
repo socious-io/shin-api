@@ -2,6 +2,7 @@ package views
 
 import (
 	"context"
+	"encoding/csv"
 	"encoding/json"
 	"fmt"
 	"net/http"
@@ -279,6 +280,74 @@ func credentialsGroup(router *gin.Engine) {
 				c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
 				return
 			}
+		}
+
+	})
+
+	g.GET("/import/:id", func(c *gin.Context) {
+
+		id := c.Param("id")
+
+		// Fetching Schema
+		schema, err := models.GetSchema(uuid.MustParse(id))
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		if schema.IssueDisabled {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "schema for issuing credentials is disabled"})
+			return
+		}
+
+		schemaAttributes := []string{"first_name", "last_name", "email"}
+		schemaFields := []string{"Recipient First name", "Recipient Last name", "recipient@email.com"}
+		for _, attributes := range schema.Attributes {
+			attribute := attributes.Name
+			attribute_type := string(attributes.Type)
+			var sample_value string
+
+			switch attribute_type {
+			case string(models.Text):
+				sample_value = "some text"
+				break
+			case string(models.Number):
+				sample_value = "1234"
+				break
+			case string(models.Boolean):
+				sample_value = "true"
+				break
+			case string(models.Email):
+				sample_value = "example@email.com"
+				break
+			case string(models.Url):
+				sample_value = "http://some.url.example"
+				break
+			case string(models.Datetime):
+				sample_value = string(time.Now().Format(time.RFC3339))
+				break
+			default:
+				sample_value = "UNKNOWN_DATATYPE"
+				break
+			}
+
+			schemaAttributes = append(schemaAttributes, attribute)
+			schemaFields = append(schemaFields, sample_value)
+		}
+
+		// Set headers for CSV download
+		c.Header("Content-Disposition", "attachment;filename=sample-import.csv")
+		c.Header("Content-Type", "text/csv")
+
+		// Create a CSV writer that writes to the response writer
+		writer := csv.NewWriter(c.Writer)
+		defer writer.Flush()
+		if err := writer.Write(schemaAttributes); err != nil {
+			c.String(500, "Could not write CSV header: %v", err)
+			return
+		}
+		if err := writer.Write(schemaFields); err != nil {
+			c.String(500, "Could not write CSV field: %v", err)
+			return
 		}
 
 	})
