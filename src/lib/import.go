@@ -78,7 +78,7 @@ func ImportCredentials(record map[string]string, meta map[string]any) error {
 
 	if import_error != nil {
 		err_str := import_error.Error()
-		ci.Status = models.CSVStatusValidationFailed
+		ci.Status = models.CSVStatusFailed
 		ci.Reason = &err_str
 	} else {
 		import_date, _ := json.Marshal(cv)

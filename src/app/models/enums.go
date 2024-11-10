@@ -154,9 +154,8 @@ func (o CSVImportDocType) Value() (driver.Value, error) {
 type CSVImportStatus string
 
 const (
-	CSVStatusInitiated        CSVImportStatus = "INITIATED"
-	CSVStatusValidationFailed CSVImportStatus = "VALIDATION_FAILED"
-	CSVStatusDone             CSVImportStatus = "DONE"
+	CSVStatusFailed CSVImportStatus = "FAILED"
+	CSVStatusDone   CSVImportStatus = "DONE"
 )
 
 func (o *CSVImportStatus) Scan(value interface{}) error {
@@ -172,5 +171,28 @@ func (o *CSVImportStatus) Scan(value interface{}) error {
 }
 
 func (o CSVImportStatus) Value() (driver.Value, error) {
+	return string(o), nil
+}
+
+type VerificationType string
+
+const (
+	VerificationSingle VerificationType = "SINGLE"
+	VerificationMulti  VerificationType = "MULTI"
+)
+
+func (o *VerificationType) Scan(value interface{}) error {
+	switch v := value.(type) {
+	case []byte:
+		*o = VerificationType(string(v))
+	case string:
+		*o = VerificationType(v)
+	default:
+		return fmt.Errorf("failed to scan operator type: %v", value)
+	}
+	return nil
+}
+
+func (o VerificationType) Value() (driver.Value, error) {
 	return string(o), nil
 }

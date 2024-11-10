@@ -6,7 +6,7 @@ CREATE TABLE csv_imports (
   user_id UUID NOT NULL,
   doc_type csv_import_doc_type NOT NULL,
   data jsonb DEFAULT NULL,
-  status csv_import_status NOT NULL DEFAULT 'INITIATED',
+  status csv_import_status NOT NULL,
   reason text DEFAULT NULL,
   created_at TIMESTAMP DEFAULT NOW(),
   CONSTRAINT fk_user FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
