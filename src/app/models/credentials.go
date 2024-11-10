@@ -185,6 +185,21 @@ func GetCredential(id uuid.UUID) (*Credential, error) {
 	return c, nil
 }
 
+func GetCredentialsByIds(ids []uuid.UUID) ([]Credential, error) {
+	credentials := []Credential{}
+	var idsIf []interface{}
+
+	// Convert UUID to a slice of interface{}
+	for _, b := range ids {
+		idsIf = append(idsIf, b)
+	}
+
+	if err := database.Fetch(&credentials, idsIf...); err != nil {
+		return nil, err
+	}
+	return credentials, nil
+}
+
 func GetCredentials(userId uuid.UUID, p database.Paginate) ([]Credential, int, error) {
 	var (
 		credentials = []Credential{}

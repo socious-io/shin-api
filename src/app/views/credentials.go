@@ -283,6 +283,44 @@ func credentialsGroup(router *gin.Engine) {
 
 	})
 
+	g.POST("/notify", paginate(), auth.LoginRequired(), func(c *gin.Context) {
+		form := new(CredentialBulkEmailForm)
+		if err := c.ShouldBindJSON(form); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+
+		credentials, err := models.GetCredentialsByIds(form.Credentials)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+
+		//Sending Email
+		for _, credential := range credentials {
+			if credential.Recipient != nil && credential.Recipient.Email != nil {
+				items := map[string]string{
+					"title":      credential.Name,
+					"issuer_org": credential.Organization.Name,
+					"recipient":  fmt.Sprintf("%s %s", *credential.Recipient.FirstName, *credential.Recipient.LastName),
+					"link":       fmt.Sprintf("%s/connect/credential/%s", config.Config.FrontHost, credential.ID.String()),
+					"message":    form.Message,
+				}
+				services.SendEmail(services.EmailConfig{
+					Approach:    services.EmailApproachTemplate,
+					Destination: *credential.Recipient.Email,
+					Title:       "Shin: Your Verifiable Credential is Here",
+					Template:    "credentials-recipients",
+					Args:        items,
+				})
+			}
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"message": "success",
+		})
+	})
+
 	g.PUT("/:id", auth.LoginRequired(), func(c *gin.Context) {
 		form := new(CredentialForm)
 		if err := c.ShouldBindJSON(form); err != nil {
@@ -341,7 +379,7 @@ func credentialsGroup(router *gin.Engine) {
 		ctx, _ := c.Get("ctx")
 		u, _ := c.Get("user")
 
-		form := new(CredentialBulkDeleteForm)
+		form := new(CredentialBulkOperationForm)
 		if err := c.ShouldBindJSON(form); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
