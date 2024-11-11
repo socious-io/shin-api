@@ -192,7 +192,7 @@ func GetCredentialsByIds(ids []uuid.UUID) ([]Credential, error) {
 	// Convert UUID to a slice of interface{}
 	for _, b := range ids {
 		idsIf = append(idsIf, b)
-	}
+	} //FIXME: Need better solution than loop over ids to cast them into interface{}
 
 	if err := database.Fetch(&credentials, idsIf...); err != nil {
 		return nil, err
