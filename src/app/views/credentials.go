@@ -444,7 +444,7 @@ func credentialsGroup(router *gin.Engine) {
 		})
 	})
 
-	g.DELETE("", auth.LoginRequired(), func(c *gin.Context) {
+	g.POST("/delete", auth.LoginRequired(), func(c *gin.Context) {
 		ctx, _ := c.Get("ctx")
 		u, _ := c.Get("user")
 
