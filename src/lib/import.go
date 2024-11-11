@@ -14,7 +14,7 @@ import (
 /*
 Importing Functions ( We can have multiple import functions here )
 */
-func ImportCredentials(record map[string]string, meta map[string]any) error {
+func ImportCredentials(record map[string]any, meta map[string]any) error {
 
 	//TODO: should we import:
 	// Name        string    `json:"name" validate:"required,min=3,max=32"` // Credential name
@@ -28,7 +28,7 @@ func ImportCredentials(record map[string]string, meta map[string]any) error {
 	var import_error error = nil
 
 	//Extract recipient info and create it
-	FirstName, LastName, Email := record["first_name"], record["last_name"], record["email"]
+	var FirstName, LastName, Email string = record["first_name"].(string), record["last_name"].(string), record["email"].(string)
 	r := models.Recipient{
 		FirstName: &FirstName,
 		LastName:  &LastName,

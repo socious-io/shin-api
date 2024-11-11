@@ -35,17 +35,17 @@ func ValidateCredentialField(field string, fieldType string, value string) (any,
 		}
 		return convValue, nil
 	case string(models.Email):
-		convValue, err := mail.ParseAddress(value)
+		_, err := mail.ParseAddress(value)
 		if err != nil {
 			return nil, fmt.Errorf("Validation failed: Type of field: %s isn't %s (error: %s)", field, models.Email, err.Error())
 		}
-		return convValue, nil
+		return value, nil
 	case string(models.Url):
-		convValue, err := url.ParseRequestURI(value)
+		_, err := url.ParseRequestURI(value)
 		if err != nil {
 			return nil, fmt.Errorf("Validation failed: Type of field: %s isn't %s (error: %s)", field, models.Url, err.Error())
 		}
-		return convValue, nil
+		return value, nil
 	case string(models.Datetime):
 		convValue, err := time.Parse(time.RFC3339, value)
 		if err != nil {
@@ -57,7 +57,7 @@ func ValidateCredentialField(field string, fieldType string, value string) (any,
 	}
 }
 
-func ValidateCSVFile(file multipart.File, fields map[string]string, resultChan chan bool, errChan chan error) {
+func ValidateCSVFile(file multipart.File, fields map[string]string, resultChan chan []map[string]any, errChan chan error) {
 
 	// Read the CSV data
 	reader := csv.NewReader(file)
@@ -92,12 +92,12 @@ func ValidateCSVFile(file multipart.File, fields map[string]string, resultChan c
 		} else {
 			newData := map[string]any{}
 			for i, value := range record {
-				validValid, err := ValidateCredentialField(csvFields[i].Name, csvFields[i].Type, value)
+				validValue, err := ValidateCredentialField(csvFields[i].Name, csvFields[i].Type, value)
 				if err != nil {
 					errChan <- err
 					return
 				}
-				newData[csvFields[i].Name] = validValid
+				newData[csvFields[i].Name] = validValue
 			}
 			data = append(data, newData)
 		}
@@ -105,5 +105,5 @@ func ValidateCSVFile(file multipart.File, fields map[string]string, resultChan c
 		c++
 	}
 
-	resultChan <- true
+	resultChan <- data
 }

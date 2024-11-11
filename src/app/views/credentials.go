@@ -263,15 +263,15 @@ func credentialsGroup(router *gin.Engine) {
 		schemaAttributes["email"] = string(models.Email)
 
 		//Processing CSV file
-		resultChan, errChan := make(chan bool), make(chan error)
+		resultChan, errChan := make(chan []map[string]any), make(chan error)
 
 		go lib.ValidateCSVFile(file, schemaAttributes, resultChan, errChan)
 
 		for {
 			select {
-			case _ = <-resultChan:
+			case results := <-resultChan:
 				c.JSON(http.StatusCreated, gin.H{"message": "success"})
-				go services.InitiateCSVImport(file, map[string]any{
+				go services.InitiateCSVImport(results, map[string]any{
 					"schema_id": schema.ID,
 					"user_id":   user.ID,
 				})
@@ -284,12 +284,12 @@ func credentialsGroup(router *gin.Engine) {
 
 	})
 
-	g.GET("/import/:id", func(c *gin.Context) {
+	g.GET("/import/download-sample/:schema_id", func(c *gin.Context) {
 
-		id := c.Param("id")
+		SchemaID := c.Param("schema_id")
 
 		// Fetching Schema
-		schema, err := models.GetSchema(uuid.MustParse(id))
+		schema, err := models.GetSchema(uuid.MustParse(SchemaID))
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
