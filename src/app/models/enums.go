@@ -158,20 +158,20 @@ const (
 	CSVStatusDone   CSVImportStatus = "DONE"
 )
 
-func (o *CSVImportStatus) Scan(value interface{}) error {
+func (cis *CSVImportStatus) Scan(value interface{}) error {
 	switch v := value.(type) {
 	case []byte:
-		*o = CSVImportStatus(string(v))
+		*cis = CSVImportStatus(string(v))
 	case string:
-		*o = CSVImportStatus(v)
+		*cis = CSVImportStatus(v)
 	default:
 		return fmt.Errorf("failed to scan operator type: %v", value)
 	}
 	return nil
 }
 
-func (o CSVImportStatus) Value() (driver.Value, error) {
-	return string(o), nil
+func (cis CSVImportStatus) Value() (driver.Value, error) {
+	return string(cis), nil
 }
 
 type VerificationType string
@@ -195,4 +195,26 @@ func (o *VerificationType) Scan(value interface{}) error {
 
 func (o VerificationType) Value() (driver.Value, error) {
 	return string(o), nil
+}
+
+type OperationServiceTrigger string
+
+const (
+	OperationCredentialRevoke OperationServiceTrigger = "CREDENTIAL_REVOKE"
+)
+
+func (ost *OperationServiceTrigger) Scan(value interface{}) error {
+	switch v := value.(type) {
+	case []byte:
+		*ost = OperationServiceTrigger(string(v))
+	case string:
+		*ost = OperationServiceTrigger(v)
+	default:
+		return fmt.Errorf("failed to scan operator type: %v", value)
+	}
+	return nil
+}
+
+func (ost OperationServiceTrigger) Value() (driver.Value, error) {
+	return string(ost), nil
 }

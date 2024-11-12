@@ -92,7 +92,6 @@ func credentialsGroup(router *gin.Engine) {
 
 	g.PATCH("/revoke", auth.LoginRequired(), func(c *gin.Context) {
 
-		ctx, _ := c.Get("ctx")
 		u, _ := c.Get("user")
 
 		form := new(CredentialBulkOperationForm)
@@ -120,18 +119,11 @@ func credentialsGroup(router *gin.Engine) {
 		}
 
 		//Handling revoke async
-		doneChan, errChan := make(chan uuid.UUID), make(chan error)
 		for _, credential := range credentials {
-			go lib.RevokeCredentialOperation(ctx.(context.Context), credential, doneChan, errChan)
-		}
-
-		for i := 0; i < len(credentials); i++ {
-			select {
-			case <-doneChan:
-			case err = <-errChan:
-				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-				return
-			}
+			go services.SendOperation(services.OperationConfig{
+				Trigger: models.OperationCredentialRevoke,
+				Entity:  credential,
+			})
 		}
 
 		c.JSON(http.StatusOK, gin.H{
@@ -325,7 +317,7 @@ func credentialsGroup(router *gin.Engine) {
 				})
 				return
 			case err := <-errChan:
-				c.JSON(http.StatusBadRequest, gin.H{"message": err.Error()})
+				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 				return
 			}
 		}
