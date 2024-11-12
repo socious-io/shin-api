@@ -357,11 +357,11 @@ func GetVerifications(userId uuid.UUID, p database.Paginate) ([]Verification, in
 	)
 
 	if len(p.Filters) > 0 && p.Filters[0].Key == "type" {
-		if err := database.QuerySelect("verifications/get", &fetchList, userId, p.Limit, p.Offet); err != nil {
+		if err := database.QuerySelect("verifications/get_by_type", &fetchList, userId, p.Limit, p.Offet, p.Filters[0].Value); err != nil {
 			return nil, 0, err
 		}
 	} else {
-		if err := database.QuerySelect("verifications/get_by_type", &fetchList, userId, p.Limit, p.Offet, p.Filters[0].Value); err != nil {
+		if err := database.QuerySelect("verifications/get", &fetchList, userId, p.Limit, p.Offet); err != nil {
 			return nil, 0, err
 		}
 	}
