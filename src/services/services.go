@@ -121,6 +121,6 @@ func CategorizeChannel(channel string) string {
 }
 func registerConsumers(Mq MessageQueue) {
 	Mq.subscribe(EmailChannel, EmailWorker)
-	Mq.queueSubscribe(CSVImportChannel, CSVImportWorkersCount, CSVImportWorker)
+	Mq.queueSubscribe(ImportChannel, ImportWorkersCount, ImportWorker)
 	Mq.subscribe(OperationChannel, OperationWorker)
 }

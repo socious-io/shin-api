@@ -311,7 +311,7 @@ func credentialsGroup(router *gin.Engine) {
 			select {
 			case results := <-resultChan:
 				c.JSON(http.StatusCreated, gin.H{"message": "success"})
-				go services.InitiateCSVImport(results, map[string]any{
+				go services.InitiateImport(results, map[string]any{
 					"schema_id": schema.ID,
 					"user_id":   user.ID,
 				})

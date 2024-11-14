@@ -129,49 +129,26 @@ func (o KybVerificationStatusType) Value() (driver.Value, error) {
 	return string(o), nil
 }
 
-type CSVImportDocType string
+type ImportTarget string
 
 const (
-	CSVDocTypeCredentials CSVImportDocType = "CREDENTIALS"
+	ImportTargetCredentials ImportTarget = "CREDENTIALS"
 )
 
-func (o *CSVImportDocType) Scan(value interface{}) error {
+func (it *ImportTarget) Scan(value interface{}) error {
 	switch v := value.(type) {
 	case []byte:
-		*o = CSVImportDocType(string(v))
+		*it = ImportTarget(string(v))
 	case string:
-		*o = CSVImportDocType(v)
+		*it = ImportTarget(v)
 	default:
 		return fmt.Errorf("failed to scan operator type: %v", value)
 	}
 	return nil
 }
 
-func (o CSVImportDocType) Value() (driver.Value, error) {
-	return string(o), nil
-}
-
-type CSVImportStatus string
-
-const (
-	CSVStatusFailed CSVImportStatus = "FAILED"
-	CSVStatusDone   CSVImportStatus = "DONE"
-)
-
-func (cis *CSVImportStatus) Scan(value interface{}) error {
-	switch v := value.(type) {
-	case []byte:
-		*cis = CSVImportStatus(string(v))
-	case string:
-		*cis = CSVImportStatus(v)
-	default:
-		return fmt.Errorf("failed to scan operator type: %v", value)
-	}
-	return nil
-}
-
-func (cis CSVImportStatus) Value() (driver.Value, error) {
-	return string(cis), nil
+func (it ImportTarget) Value() (driver.Value, error) {
+	return string(it), nil
 }
 
 type VerificationType string
