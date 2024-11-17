@@ -268,6 +268,7 @@ func credentialsGroup(router *gin.Engine) {
 
 	g.POST("/import", auth.LoginRequired(), func(c *gin.Context) {
 
+		ctx, _ := c.Get("ctx")
 		u, _ := c.Get("user")
 		user := u.(*models.User)
 
@@ -310,11 +311,20 @@ func credentialsGroup(router *gin.Engine) {
 		for {
 			select {
 			case results := <-resultChan:
-				c.JSON(http.StatusCreated, gin.H{"message": "success"})
+				i := models.Import{
+					Target:     models.ImportTargetCredentials,
+					UserID:     user.ID,
+					TotalCount: len(results),
+				}
+				if err := i.Create(ctx.(context.Context)); err != nil {
+					c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+					return
+				}
+				c.JSON(http.StatusCreated, i)
 				go services.InitiateImport(results, map[string]any{
 					"schema_id": schema.ID,
 					"user_id":   user.ID,
-				})
+				}, i)
 				return
 			case err := <-errChan:
 				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -322,6 +332,18 @@ func credentialsGroup(router *gin.Engine) {
 			}
 		}
 
+	})
+
+	g.GET("/import/:id", auth.LoginRequired(), func(c *gin.Context) {
+		id := c.Param("id")
+
+		i, err := models.GetImport(uuid.MustParse(id))
+
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		}
+
+		c.JSON(http.StatusOK, i)
 	})
 
 	g.GET("/import/download-sample/:schema_id", func(c *gin.Context) {
@@ -428,6 +450,36 @@ func credentialsGroup(router *gin.Engine) {
 		c.JSON(http.StatusOK, gin.H{
 			"message": "success",
 		})
+	})
+
+	g.POST("/notify/via-schema", auth.LoginRequired(), func(c *gin.Context) {
+
+		ctx, _ := c.Get("ctx")
+		u, _ := c.Get("user")
+
+		form := new(CredentialBySchemaEmailForm)
+		if err := c.ShouldBindJSON(form); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+
+		doneChan, errChan := make(chan bool), make(chan error)
+
+		go services.CredentialBulkEmailAsync(ctx.(context.Context), u.(*models.User).ID, form.SchemaID.String(), form.Message, doneChan, errChan)
+		for {
+			select {
+			case <-doneChan:
+				c.JSON(http.StatusOK, gin.H{
+					"message": "success",
+				})
+				return
+			case err := <-errChan:
+				c.JSON(http.StatusOK, gin.H{
+					"error": err,
+				})
+			}
+		}
+
 	})
 
 	g.PUT("/:id", auth.LoginRequired(), func(c *gin.Context) {

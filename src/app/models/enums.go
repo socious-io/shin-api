@@ -151,6 +151,29 @@ func (it ImportTarget) Value() (driver.Value, error) {
 	return string(it), nil
 }
 
+type ImportStatus string
+
+const (
+	ImportStatusInitiated ImportStatus = "INITIATED"
+	ImportStatusCompleted ImportStatus = "COMPLETED"
+)
+
+func (is *ImportStatus) Scan(value interface{}) error {
+	switch v := value.(type) {
+	case []byte:
+		*is = ImportStatus(string(v))
+	case string:
+		*is = ImportStatus(v)
+	default:
+		return fmt.Errorf("failed to scan operator type: %v", value)
+	}
+	return nil
+}
+
+func (is ImportStatus) Value() (driver.Value, error) {
+	return string(is), nil
+}
+
 type VerificationType string
 
 const (

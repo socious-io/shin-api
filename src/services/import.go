@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"shin/src/app/models"
+	"shin/src/config"
 	"shin/src/utils"
 	"time"
 
@@ -16,8 +17,8 @@ var ImportChannel = CategorizeChannel("import")
 var ImportWorkersCount = 4
 
 type ImportConfig struct {
+	Import models.Import
 	Record map[string]any
-	Target models.ImportTarget
 	Meta   map[string]any
 }
 
@@ -30,13 +31,13 @@ func ImportWorker(message interface{}) {
 	utils.Copy(message, importConfig)
 
 	var (
-		importTarget = importConfig.Target
-		record       = importConfig.Record
-		meta         = importConfig.Meta
+		importObj = importConfig.Import
+		record    = importConfig.Record
+		meta      = importConfig.Meta
 	)
 
-	if importTarget == models.ImportTargetCredentials {
-		err := importCredentials(record, meta)
+	if importObj.Target == models.ImportTargetCredentials {
+		err := importCredentials(record, meta, importObj)
 		if err != nil {
 			fmt.Println("Couldn't Import Docs to Database, Error: ", err.Error())
 		}
@@ -48,12 +49,12 @@ func ImportWorker(message interface{}) {
 Initiate Import
 */
 
-func InitiateImport(results []map[string]any, meta map[string]any) {
+func InitiateImport(results []map[string]any, meta map[string]any, i models.Import) {
 
 	for _, result := range results {
 		SendImport(ImportConfig{
+			Import: i,
 			Record: result,
-			Target: models.ImportTargetCredentials,
 			Meta:   meta,
 		})
 	}
@@ -62,7 +63,7 @@ func InitiateImport(results []map[string]any, meta map[string]any) {
 /*
 Importing Functions ( We can have multiple import functions here )
 */
-func importCredentials(record map[string]any, meta map[string]any) error {
+func importCredentials(record map[string]any, meta map[string]any, i models.Import) error {
 
 	//TODO: should we import:
 	// Name        string    `json:"name" validate:"required,min=3,max=32"` // Credential name
@@ -115,6 +116,23 @@ func importCredentials(record map[string]any, meta map[string]any) error {
 
 	if err := cv.Create(ctx.(context.Context)); err != nil {
 		return err
+	}
+
+	err = i.Append(ctx, cv.ID)
+	if err != nil {
+		fmt.Println(err)
+	}
+
+	if i.Status == models.ImportStatusCompleted {
+		SendEmail(EmailConfig{
+			Approach:    EmailApproachTemplate,
+			Destination: u.Email,
+			Title:       "Shin: Your CSV Import has been completed", //TODO: exact title
+			Template:    "credentials-import-completed",
+			Args: map[string]string{
+				"link": fmt.Sprintf("%s/credentials/create?schema=%s", config.Config.FrontHost, meta["schema_id"]),
+			},
+		})
 	}
 
 	return nil

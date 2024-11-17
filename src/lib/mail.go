@@ -57,8 +57,9 @@ func (sgc *SendGridType) SendWithTemplate(address string, name string, templateI
 func InitSendGridLib(sgc SendGridType) {
 	SendGridClient = sgc
 	SendGridTemplates = map[string]string{
-		"otp":                    "d-5ace79d4674b45d1bfb9b35c4d6eb8c0",
-		"forget-password":        "d-d68cc8d8409942599f761261e5a7fbcb",
-		"credentials-recipients": "d-12fddb16345e4073a6741884237ed39c",
+		"otp":                          "d-5ace79d4674b45d1bfb9b35c4d6eb8c0",
+		"forget-password":              "d-d68cc8d8409942599f761261e5a7fbcb",
+		"credentials-recipients":       "d-12fddb16345e4073a6741884237ed39c",
+		"credentials-import-completed": "d-12fddb16345e4073a6741884237ed39c", //TODO: Add sendgrid template
 	}
 }

@@ -8,6 +8,7 @@ import (
 	"shin/src/config"
 	"shin/src/database"
 	"shin/src/wallet"
+	"strconv"
 	"time"
 
 	"github.com/google/uuid"
@@ -36,6 +37,7 @@ type Credential struct {
 	ConnectionID  *string        `db:"connection_id" json:"connection_id"`
 	ConnectionURL *string        `db:"connection_url" json:"connection_url"`
 	Claims        types.JSONText `db:"claims" json:"claims"`
+	Sent          bool           `db:"sent" json:"sent"`
 
 	Status CredentialStatusType `db:"status" json:"status"`
 
@@ -200,6 +202,15 @@ func GetCredentialsByIds(ids []uuid.UUID) ([]Credential, error) {
 	return credentials, nil
 }
 
+func GetCredentialsBySchemaID(ctx context.Context, ids []uuid.UUID, createdId uuid.UUID) error {
+	rows, err := database.Query(ctx, "credentials/delete_bulk", pq.Array(ids), createdId)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+	return nil
+}
+
 func GetCredentials(userId uuid.UUID, p database.Paginate) ([]Credential, int, error) {
 	var (
 		credentials = []Credential{}
@@ -209,9 +220,19 @@ func GetCredentials(userId uuid.UUID, p database.Paginate) ([]Credential, int, e
 
 	// TODO: it's temperory solution database.QuerySelect must handle filtering system
 	if len(p.Filters) > 0 && p.Filters[0].Key == "schema_id" {
-		if err := database.QuerySelect("credentials/get_by_schema", &fetchList, userId, p.Limit, p.Offet, p.Filters[0].Value); err != nil {
+
+		sent := true
+		if len(p.Filters) > 1 && p.Filters[1].Key == "sent" {
+			val, err := strconv.ParseBool(p.Filters[1].Value)
+			if err == nil {
+				sent = val
+			}
+		}
+
+		if err := database.QuerySelect("credentials/get_by_schema", &fetchList, userId, p.Limit, p.Offet, p.Filters[0].Value, sent); err != nil {
 			return nil, 0, err
 		}
+
 	} else {
 		if err := database.QuerySelect("credentials/get", &fetchList, userId, p.Limit, p.Offet); err != nil {
 			return nil, 0, err
@@ -234,6 +255,15 @@ func GetCredentials(userId uuid.UUID, p database.Paginate) ([]Credential, int, e
 
 func CredentialsBulkDelete(ctx context.Context, ids []uuid.UUID, createdId uuid.UUID) error {
 	rows, err := database.Query(ctx, "credentials/delete_bulk", pq.Array(ids), createdId)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+	return nil
+}
+
+func CredentialsBulkSend(ctx context.Context, ids []uuid.UUID, createdId uuid.UUID) error {
+	rows, err := database.Query(ctx, "credentials/send_bulk", pq.Array(ids), createdId)
 	if err != nil {
 		return err
 	}

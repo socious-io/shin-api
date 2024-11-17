@@ -11,11 +11,14 @@ import (
 )
 
 type Import struct {
-	ID        uuid.UUID    `db:"id" json:"id"`
-	Target    ImportTarget `db:"target" json:"target"`
-	UserID    uuid.UUID    `db:"user_id" json:"user_id"`
-	Entities  []uuid.UUID  `db:"-" json:"entities"`
-	CreatedAt time.Time    `db:"created_at" json:"created_at"`
+	ID         uuid.UUID    `db:"id" json:"id"`
+	Target     ImportTarget `db:"target" json:"target"`
+	UserID     uuid.UUID    `db:"user_id" json:"user_id"`
+	Entities   []uuid.UUID  `db:"-" json:"entities"`
+	TotalCount int          `db:"total_count" json:"total_count"`
+	Count      int          `db:"count" json:"count"`
+	Status     ImportStatus `db:"status" json:"status"`
+	CreatedAt  time.Time    `db:"created_at" json:"created_at"`
 
 	EntitiesArray []uint8 `db:"entities" json:"-"`
 }
@@ -37,7 +40,7 @@ func (i *Import) Create(ctx context.Context) error {
 	rows, err := database.Query(
 		ctx,
 		"imports/create",
-		i.UserID, i.Target,
+		i.UserID, i.Target, i.TotalCount,
 	)
 
 	if err != nil {
@@ -74,10 +77,43 @@ func (i *Import) Update(ctx context.Context) error {
 	return nil
 }
 
+func (i *Import) Append(ctx context.Context, entity uuid.UUID) error {
+
+	tx, err := database.GetDB().Beginx()
+	if err != nil {
+		return err
+	}
+	rows, err := database.TxQuery(ctx,
+		tx,
+		"imports/append",
+		i.ID, entity,
+	)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	for rows.Next() {
+		if err := rows.StructScan(i); err != nil {
+			tx.Rollback()
+			return err
+		}
+	}
+	rows.Close()
+
+	return tx.Commit()
+}
+
 func GetImport(id uuid.UUID) (*Import, error) {
 	i := new(Import)
 	if err := database.Fetch(i, id); err != nil {
 		return nil, err
 	}
+
+	err := pq.Array(&i.Entities).Scan(i.EntitiesArray)
+	if err != nil {
+		return nil, err
+	}
+
 	return i, nil
 }
