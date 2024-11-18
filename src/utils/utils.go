@@ -35,3 +35,19 @@ func DecodeJWT(token string) (header, payload []byte, err error) {
 
 	return headerBytes, payloadBytes, nil
 }
+
+func ArrayContains[T comparable](arr []T, x T) bool {
+	for _, item := range arr {
+		if item == x {
+			return true
+		}
+	}
+	return false
+}
+
+func AppendIfNotExists[T comparable](arr []T, x T) []T {
+	if !ArrayContains(arr, x) {
+		arr = append(arr, x)
+	}
+	return arr
+}

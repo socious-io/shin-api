@@ -53,6 +53,20 @@ type CredentialForm struct {
 	Claims      []Claim   `json:"claims" validate:"required"`
 }
 
+type CredentialBulkOperationForm struct {
+	Credentials []uuid.UUID `json:"credentials" validate:"required"`
+}
+
+type CredentialBulkEmailForm struct {
+	CredentialBulkOperationForm
+	Message string `json:"message" validate:"required"`
+}
+
+type CredentialBySchemaEmailForm struct {
+	SchemaID uuid.UUID `json:"schema_id" validate:"required"`
+	Message  string    `json:"message" validate:"required"`
+}
+
 type RecipientForm struct {
 	FirstName string `json:"first_name" validate:"required,min=3,max=128"`
 	LastName  string `json:"last_name" validate:"required,min=3,max=128"`

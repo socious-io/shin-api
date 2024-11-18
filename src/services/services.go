@@ -41,6 +41,34 @@ func (mq *MessageQueue) subscribe(channel string, consumer func(interface{})) {
 
 }
 
+func (mq *MessageQueue) queueSubscribe(channel string, count int, consumer func(interface{})) {
+	client := mq.client
+
+	mq.consumers[channel] = consumer
+	queue := "main"
+
+	for i := 0; i < count; i++ {
+		go func() {
+			_, err := client.QueueSubscribe(channel, queue, func(msg *nats.Msg) {
+				var dest interface{}
+
+				err := json.Unmarshal(msg.Data, &dest)
+				if err != nil {
+					fmt.Printf("received invalid JSON payload: %s\n", msg.Data)
+				} else {
+					fmt.Printf("received valid JSON payload: %+v\n", dest)
+				}
+				consumer(dest)
+			})
+
+			if err != nil {
+				fmt.Printf("Channel '%s' failed to be subscribed, Error: %s", channel, err.Error())
+			}
+		}()
+	}
+
+}
+
 func (mq *MessageQueue) sendJson(channel string, message interface{}) {
 
 	client := mq.client
@@ -93,4 +121,6 @@ func CategorizeChannel(channel string) string {
 }
 func registerConsumers(Mq MessageQueue) {
 	Mq.subscribe(EmailChannel, EmailWorker)
+	Mq.queueSubscribe(ImportChannel, ImportWorkersCount, ImportWorker)
+	Mq.subscribe(OperationChannel, OperationWorker)
 }
