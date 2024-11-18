@@ -68,7 +68,7 @@ func CredentialBulkEmailAsync(ctx context.Context, userId uuid.UUID, schemaId st
 			},
 			{
 				Key:   "sent",
-				Value: "true",
+				Value: "false",
 			},
 		},
 	}
@@ -110,7 +110,6 @@ func CredentialBulkEmailAsync(ctx context.Context, userId uuid.UUID, schemaId st
 
 		p.Offet = p.Offet + p.Limit
 		models.CredentialsBulkSend(ctx, ids, userId)
-		fmt.Println(ids, p.Offet)
 		ids = []uuid.UUID{}
 
 	}

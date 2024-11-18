@@ -78,30 +78,23 @@ func (i *Import) Update(ctx context.Context) error {
 }
 
 func (i *Import) Append(ctx context.Context, entity uuid.UUID) error {
-
-	tx, err := database.GetDB().Beginx()
-	if err != nil {
-		return err
-	}
-	rows, err := database.TxQuery(ctx,
-		tx,
+	rows, err := database.Query(
+		ctx,
 		"imports/append",
 		i.ID, entity,
 	)
+
 	if err != nil {
-		tx.Rollback()
 		return err
 	}
 
+	defer rows.Close()
 	for rows.Next() {
-		if err := rows.StructScan(i); err != nil {
-			tx.Rollback()
+		if err := i.Scan(rows); err != nil {
 			return err
 		}
 	}
-	rows.Close()
-
-	return tx.Commit()
+	return nil
 }
 
 func GetImport(id uuid.UUID) (*Import, error) {

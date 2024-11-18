@@ -202,15 +202,6 @@ func GetCredentialsByIds(ids []uuid.UUID) ([]Credential, error) {
 	return credentials, nil
 }
 
-func GetCredentialsBySchemaID(ctx context.Context, ids []uuid.UUID, createdId uuid.UUID) error {
-	rows, err := database.Query(ctx, "credentials/delete_bulk", pq.Array(ids), createdId)
-	if err != nil {
-		return err
-	}
-	defer rows.Close()
-	return nil
-}
-
 func GetCredentials(userId uuid.UUID, p database.Paginate) ([]Credential, int, error) {
 	var (
 		credentials = []Credential{}
