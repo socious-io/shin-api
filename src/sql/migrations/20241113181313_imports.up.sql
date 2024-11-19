@@ -1,4 +1,4 @@
--- CREATE TYPE import_target AS ENUM ('CREDENTIALS');
+CREATE TYPE import_target AS ENUM ('CREDENTIALS');
 CREATE TYPE import_status AS ENUM ('INITIATED', 'COMPLETED');
 
 CREATE TABLE imports (
