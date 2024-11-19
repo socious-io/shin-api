@@ -60,6 +60,6 @@ func InitSendGridLib(sgc SendGridType) {
 		"otp":                          "d-5ace79d4674b45d1bfb9b35c4d6eb8c0",
 		"forget-password":              "d-d68cc8d8409942599f761261e5a7fbcb",
 		"credentials-recipients":       "d-12fddb16345e4073a6741884237ed39c",
-		"credentials-import-completed": "d-12fddb16345e4073a6741884237ed39c", //TODO: Add sendgrid template
+		"credentials-import-completed": "d-3710ff520b6a4a48937306f034b23d58",
 	}
 }

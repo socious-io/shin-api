@@ -272,7 +272,7 @@ func credentialsGroup(router *gin.Engine) {
 		u, _ := c.Get("user")
 		user := u.(*models.User)
 
-		file, _, err := c.Request.FormFile("file")
+		file, header, err := c.Request.FormFile("file")
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error":   err.Error(),
@@ -299,9 +299,9 @@ func credentialsGroup(router *gin.Engine) {
 		for _, attributes := range schema.Attributes {
 			schemaAttributes[attributes.Name] = string(attributes.Type)
 		}
-		schemaAttributes["first_name"] = string(models.Text)
-		schemaAttributes["last_name"] = string(models.Text)
-		schemaAttributes["email"] = string(models.Email)
+		schemaAttributes["recipient_first_name"] = string(models.Text)
+		schemaAttributes["recipient_last_name"] = string(models.Text)
+		schemaAttributes["recipient_email"] = string(models.Email)
 
 		//Processing CSV file
 		resultChan, errChan := make(chan []map[string]any), make(chan error)
@@ -324,6 +324,7 @@ func credentialsGroup(router *gin.Engine) {
 				go services.InitiateImport(results, map[string]any{
 					"schema_id": schema.ID,
 					"user_id":   user.ID,
+					"file_name": header.Filename,
 				}, i)
 				return
 			case err := <-errChan:
@@ -361,7 +362,7 @@ func credentialsGroup(router *gin.Engine) {
 			return
 		}
 
-		schemaAttributes := []string{"first_name", "last_name", "email"}
+		schemaAttributes := []string{"recipient_first_name", "recipient_last_name", "recipient_email"}
 		schemaFields := []string{"Recipient First name", "Recipient Last name", "recipient@email.com"}
 		for _, attributes := range schema.Attributes {
 			attribute := attributes.Name
