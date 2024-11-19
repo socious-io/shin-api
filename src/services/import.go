@@ -7,6 +7,7 @@ import (
 	"shin/src/app/models"
 	"shin/src/config"
 	"shin/src/utils"
+	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -68,14 +69,14 @@ func importCredentials(record map[string]any, meta map[string]any, i models.Impo
 	//TODO: should we import:
 	// Name        string    `json:"name" validate:"required,min=3,max=32"` // Credential name
 	// Description *string   `json:"description" validate:"required,min=3"` // Credential description
-	schema_id, user_id := uuid.MustParse(meta["schema_id"].(string)), uuid.MustParse(meta["user_id"].(string))
+	schema_id, user_id, file_name := uuid.MustParse(meta["schema_id"].(string)), uuid.MustParse(meta["user_id"].(string)), meta["file_name"].(string)
 
 	s, _ := models.GetSchema(schema_id)
 	u, _ := models.GetUser(user_id)
 	ctx := context.Background()
 
 	//Extract recipient info and create it
-	var FirstName, LastName, Email string = record["first_name"].(string), record["last_name"].(string), record["email"].(string)
+	var FirstName, LastName, Email string = record["recipient_first_name"].(string), record["recipient_last_name"].(string), record["recipient_email"].(string)
 	r := models.Recipient{
 		FirstName: &FirstName,
 		LastName:  &LastName,
@@ -86,9 +87,9 @@ func importCredentials(record map[string]any, meta map[string]any, i models.Impo
 	if err := r.Create(ctx.(context.Context)); err != nil {
 		return err
 	}
-	delete(record, "first_name")
-	delete(record, "last_name")
-	delete(record, "email")
+	delete(record, "recipient_first_name")
+	delete(record, "recipient_last_name")
+	delete(record, "recipient_email")
 
 	//Creating Credential
 	cv := models.Credential{
@@ -127,10 +128,12 @@ func importCredentials(record map[string]any, meta map[string]any, i models.Impo
 		SendEmail(EmailConfig{
 			Approach:    EmailApproachTemplate,
 			Destination: u.Email,
-			Title:       "Shin: Your CSV Import has been completed", //TODO: exact title
+			Title:       "Shin: Your import is ready",
 			Template:    "credentials-import-completed",
 			Args: map[string]string{
-				"link": fmt.Sprintf("%s/credentials/create?schema=%s", config.Config.FrontHost, meta["schema_id"]),
+				"file_name":   file_name,
+				"total_count": strconv.Itoa(i.TotalCount),
+				"link":        fmt.Sprintf("%s/credentials/create?schema=%s&sent=false", config.Config.FrontHost, schema_id),
 			},
 		})
 	}
