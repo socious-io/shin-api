@@ -70,10 +70,17 @@ func importCredentials(record map[string]any, meta map[string]any, i models.Impo
 	// Name        string    `json:"name" validate:"required,min=3,max=32"` // Credential name
 	// Description *string   `json:"description" validate:"required,min=3"` // Credential description
 	schema_id, user_id, file_name := uuid.MustParse(meta["schema_id"].(string)), uuid.MustParse(meta["user_id"].(string)), meta["file_name"].(string)
-
-	s, _ := models.GetSchema(schema_id)
-	u, _ := models.GetUser(user_id)
 	ctx := context.Background()
+
+	s, err := models.GetSchema(schema_id)
+	if err != nil {
+		return err
+	}
+
+	u, err := models.GetUser(user_id)
+	if err != nil {
+		return err
+	}
 
 	//Extract recipient info and create it
 	var FirstName, LastName, Email string = record["recipient_first_name"].(string), record["recipient_last_name"].(string), record["recipient_email"].(string)
@@ -93,6 +100,7 @@ func importCredentials(record map[string]any, meta map[string]any, i models.Impo
 
 	//Creating Credential
 	cv := models.Credential{
+		Name:        s.Name, //We will automatically assign schema name to credential name
 		CreatedID:   u.ID,
 		RecipientID: &r.ID,
 		SchemaID:    s.ID,
