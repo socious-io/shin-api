@@ -141,7 +141,7 @@ func importCredentials(record map[string]any, meta map[string]any, i models.Impo
 			Args: map[string]string{
 				"file_name":   file_name,
 				"total_count": strconv.Itoa(i.TotalCount),
-				"link":        fmt.Sprintf("%s/credentials/create?schema=%s&sent=false", config.Config.FrontHost, schema_id),
+				"link":        fmt.Sprintf("%s/credentials/create?schema=%s&step=2", config.Config.FrontHost, schema_id),
 			},
 		})
 	}
