@@ -274,7 +274,6 @@ func credentialsGroup(router *gin.Engine) {
 
 		//Check for any ongoing imports
 		i, err := models.GetActiveImportByUserId(user.ID)
-		fmt.Println("i, err", i, err)
 		if i != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "You have an existing incomplete import"})
 			return
