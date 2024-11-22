@@ -14,7 +14,7 @@ import (
 
 func recipientsGroup(router *gin.Engine) {
 	g := router.Group("recipients")
-	g.Use(auth.LoginRequired())
+	g.Use(auth.AuthRequired())
 
 	g.GET("", paginate(), func(c *gin.Context) {
 		u, _ := c.Get("user")

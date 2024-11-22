@@ -24,14 +24,20 @@ type SchemaForm struct {
 }
 
 type VerificationForm struct {
-	Name        string    `json:"name" validate:"required,min=3,max=32"`
-	Description *string   `json:"description" validate:"required,min=3"`
-	SchemaID    uuid.UUID `json:"schema_id" validate:"required"`
+	Name        string                  `json:"name" validate:"required,min=3,max=32"`
+	Description *string                 `json:"description" validate:"required,min=3"`
+	SchemaID    uuid.UUID               `json:"schema_id" validate:"required"`
+	Type        models.VerificationType `json:"type" validate:"required"`
 	Attributes  []struct {
 		AttributeID uuid.UUID                       `json:"attribute_id"`
 		Operator    models.VerificationOperatorType `json:"operator"`
 		Value       string                          `json:"value"`
 	} `json:"attributes"`
+}
+
+type VerificationIndividualForm struct {
+	CustomerID     string    `json:"customer_id" validate:"required"`
+	VerificationID uuid.UUID `json:"verification_id" validate:"required"`
 }
 
 type Claim struct {
@@ -47,10 +53,29 @@ type CredentialForm struct {
 	Claims      []Claim   `json:"claims" validate:"required"`
 }
 
+type CredentialBulkOperationForm struct {
+	Credentials []uuid.UUID `json:"credentials" validate:"required"`
+}
+
+type CredentialBulkEmailForm struct {
+	CredentialBulkOperationForm
+	Message string `json:"message" validate:"required"`
+}
+
+type CredentialBySchemaEmailForm struct {
+	SchemaID uuid.UUID `json:"schema_id" validate:"required"`
+	Message  string    `json:"message" validate:"required"`
+}
+
 type RecipientForm struct {
 	FirstName string `json:"first_name" validate:"required,min=3,max=128"`
 	LastName  string `json:"last_name" validate:"required,min=3,max=128"`
 	Email     string `json:"email" validate:"required,email"`
+}
+
+type CredentialRecipientForm struct {
+	Credential CredentialForm `json:"credential"`
+	Recipient  RecipientForm  `json:"recipient"`
 }
 
 type ProfileUpdateForm struct {
@@ -65,4 +90,8 @@ type ProfileUpdateForm struct {
 
 type KYBVerificationForm struct {
 	Documents []string `json:"documents"`
+}
+
+type ApikeyForm struct {
+	Name string `json:"name"`
 }

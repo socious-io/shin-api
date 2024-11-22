@@ -128,3 +128,93 @@ func (o *KybVerificationStatusType) Scan(value interface{}) error {
 func (o KybVerificationStatusType) Value() (driver.Value, error) {
 	return string(o), nil
 }
+
+type ImportTarget string
+
+const (
+	ImportTargetCredentials ImportTarget = "CREDENTIALS"
+)
+
+func (it *ImportTarget) Scan(value interface{}) error {
+	switch v := value.(type) {
+	case []byte:
+		*it = ImportTarget(string(v))
+	case string:
+		*it = ImportTarget(v)
+	default:
+		return fmt.Errorf("failed to scan operator type: %v", value)
+	}
+	return nil
+}
+
+func (it ImportTarget) Value() (driver.Value, error) {
+	return string(it), nil
+}
+
+type ImportStatus string
+
+const (
+	ImportStatusInitiated ImportStatus = "INITIATED"
+	ImportStatusCompleted ImportStatus = "COMPLETED"
+)
+
+func (is *ImportStatus) Scan(value interface{}) error {
+	switch v := value.(type) {
+	case []byte:
+		*is = ImportStatus(string(v))
+	case string:
+		*is = ImportStatus(v)
+	default:
+		return fmt.Errorf("failed to scan operator type: %v", value)
+	}
+	return nil
+}
+
+func (is ImportStatus) Value() (driver.Value, error) {
+	return string(is), nil
+}
+
+type VerificationType string
+
+const (
+	VerificationSingle VerificationType = "SINGLE"
+	VerificationMulti  VerificationType = "MULTI"
+)
+
+func (o *VerificationType) Scan(value interface{}) error {
+	switch v := value.(type) {
+	case []byte:
+		*o = VerificationType(string(v))
+	case string:
+		*o = VerificationType(v)
+	default:
+		return fmt.Errorf("failed to scan operator type: %v", value)
+	}
+	return nil
+}
+
+func (o VerificationType) Value() (driver.Value, error) {
+	return string(o), nil
+}
+
+type OperationServiceTrigger string
+
+const (
+	OperationCredentialRevoke OperationServiceTrigger = "CREDENTIAL_REVOKE"
+)
+
+func (ost *OperationServiceTrigger) Scan(value interface{}) error {
+	switch v := value.(type) {
+	case []byte:
+		*ost = OperationServiceTrigger(string(v))
+	case string:
+		*ost = OperationServiceTrigger(v)
+	default:
+		return fmt.Errorf("failed to scan operator type: %v", value)
+	}
+	return nil
+}
+
+func (ost OperationServiceTrigger) Value() (driver.Value, error) {
+	return string(ost), nil
+}

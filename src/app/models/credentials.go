@@ -12,6 +12,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx/types"
+	"github.com/lib/pq"
 )
 
 type Credential struct {
@@ -35,6 +36,7 @@ type Credential struct {
 	ConnectionID  *string        `db:"connection_id" json:"connection_id"`
 	ConnectionURL *string        `db:"connection_url" json:"connection_url"`
 	Claims        types.JSONText `db:"claims" json:"claims"`
+	Sent          bool           `db:"sent" json:"sent"`
 
 	Status CredentialStatusType `db:"status" json:"status"`
 
@@ -176,7 +178,27 @@ func GetCredential(id uuid.UUID) (*Credential, error) {
 	if err := database.Fetch(c, id); err != nil {
 		return nil, err
 	}
+	schema, err := GetSchema(c.SchemaID)
+	if err != nil {
+		return nil, err
+	}
+	c.Schema = schema
 	return c, nil
+}
+
+func GetCredentialsByIds(ids []uuid.UUID) ([]Credential, error) {
+	credentials := []Credential{}
+	var idsIf []interface{}
+
+	// Convert UUID to a slice of interface{}
+	for _, b := range ids {
+		idsIf = append(idsIf, b)
+	} //FIXME: Need better solution than loop over ids to cast them into interface{}
+
+	if err := database.Fetch(&credentials, idsIf...); err != nil {
+		return nil, err
+	}
+	return credentials, nil
 }
 
 func GetCredentials(userId uuid.UUID, p database.Paginate) ([]Credential, int, error) {
@@ -186,8 +208,17 @@ func GetCredentials(userId uuid.UUID, p database.Paginate) ([]Credential, int, e
 		ids         []interface{}
 	)
 
-	if err := database.QuerySelect("credentials/get", &fetchList, userId, p.Limit, p.Offet); err != nil {
-		return nil, 0, err
+	// TODO: it's temperory solution database.QuerySelect must handle filtering system
+	if len(p.Filters) > 0 && p.Filters[0].Key == "schema_id" {
+
+		if err := database.QuerySelect("credentials/get_by_schema", &fetchList, userId, p.Limit, p.Offet, p.Filters[0].Value); err != nil {
+			return nil, 0, err
+		}
+
+	} else {
+		if err := database.QuerySelect("credentials/get", &fetchList, userId, p.Limit, p.Offet); err != nil {
+			return nil, 0, err
+		}
 	}
 
 	if len(fetchList) < 1 {
@@ -202,4 +233,22 @@ func GetCredentials(userId uuid.UUID, p database.Paginate) ([]Credential, int, e
 		return nil, 0, err
 	}
 	return credentials, fetchList[0].TotalCount, nil
+}
+
+func CredentialsBulkDelete(ctx context.Context, ids []uuid.UUID, createdId uuid.UUID) error {
+	rows, err := database.Query(ctx, "credentials/delete_bulk", pq.Array(ids), createdId)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+	return nil
+}
+
+func CredentialsBulkSend(ctx context.Context, ids []uuid.UUID, createdId uuid.UUID) error {
+	rows, err := database.Query(ctx, "credentials/send_bulk", pq.Array(ids), createdId)
+	if err != nil {
+		return err
+	}
+	defer rows.Close()
+	return nil
 }

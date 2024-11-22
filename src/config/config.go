@@ -9,21 +9,24 @@ import (
 var Config ConfigType
 
 type ConfigType struct {
-	Env      string `mapstructure:"env"`
-	Port     int    `mapstructure:"port"`
-	Debug    bool   `mapstructure:"debug"`
-	Secret   string `mapstructure:"secret"`
-	Host     string `mapstructure:"host"`
-	Database struct {
+	Env    string `mapstructure:"env"`
+	Port   int    `mapstructure:"port"`
+	Debug  bool   `mapstructure:"debug"`
+	Secret string `mapstructure:"secret"`
+	SSO    struct {
+		Secret string `mapstructure:"secret"`
+	} `mapstructure:"sso"`
+	Host      string `mapstructure:"host"`
+	FrontHost string `mapstructure:"fronthost"`
+	Database  struct {
 		URL        string `mapstructure:"url"`
 		SqlDir     string `mapstructure:"sqldir"`
 		Migrations string `mapstructure:"migrations"`
 	} `mapstructure:"database"`
 	Sendgrid struct {
-		Disabled  bool              `mapstructure:"disabled"`
-		URL       string            `mapstructure:"url"`
-		ApiKey    string            `mapstructure:"api_key"`
-		Templates map[string]string `mapstructure:"templates"`
+		Disabled bool   `mapstructure:"disabled"`
+		URL      string `mapstructure:"url"`
+		ApiKey   string `mapstructure:"api_key"`
 	} `mapstructure:"sendgrid"`
 	Wellet struct {
 		Agent       string `mapstructure:"agent"`

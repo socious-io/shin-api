@@ -23,7 +23,7 @@ func main() {
 		Disabled: config.Config.Sendgrid.Disabled,
 		ApiKey:   config.Config.Sendgrid.ApiKey,
 		Url:      config.Config.Sendgrid.URL,
-	}, config.Config.Sendgrid.Templates)
+	})
 
 	services.Init()
 }

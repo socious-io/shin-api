@@ -85,6 +85,17 @@ func credentialGroup() {
 		Expect(w.Code).To(Equal(200))
 	})
 
+	It("it should get credentials by schema", func() {
+		w := httptest.NewRecorder()
+		schemaId := credentialsData[0]["schema_id"]
+		req, _ := http.NewRequest("GET", fmt.Sprintf("/credentials?schema=%s", schemaId), nil)
+		req.Header.Set("Authorization", authTokens[0])
+		router.ServeHTTP(w, req)
+		body := decodeBody(w.Body)
+		Expect(len(body["results"].([]interface{}))).To(Equal(len(credentialsData)))
+		Expect(w.Code).To(Equal(200))
+	})
+
 	It("it should delete credential", func() {
 		for _, data := range credentialsData {
 			w := httptest.NewRecorder()
@@ -92,6 +103,25 @@ func credentialGroup() {
 			req.Header.Set("Authorization", authTokens[0])
 			router.ServeHTTP(w, req)
 			Expect(w.Code).To(Equal(200))
+		}
+	})
+
+	It("it should create recipient+credential", func() {
+		for i, cdata := range credentialsData {
+			w := httptest.NewRecorder()
+			cdata["schema_id"] = schemasData[0]["id"]
+			data := map[string]any{
+				"recipient":  recipientsData[0],
+				"credential": cdata,
+			}
+			reqBody, _ := json.Marshal(data)
+			req, _ := http.NewRequest("POST", "/credentials/with-recipient", bytes.NewBuffer(reqBody))
+			req.Header.Set("Content-Type", "application/json")
+			req.Header.Set("Authorization", authTokens[0])
+			router.ServeHTTP(w, req)
+			body := decodeBody(w.Body)
+			credentialsData[i]["id"] = body["id"]
+			Expect(w.Code).To(Equal(201))
 		}
 	})
 }

@@ -417,4 +417,49 @@ func authGroup(router *gin.Engine) {
 
 	})
 
+	g.POST("/socious", auth.SSOLoginRequired(), func(c *gin.Context) {
+		u, _ := c.Get("user")
+		ctx, _ := c.Get("ctx")
+		tokenClaims, _ := c.Get("token_claims")
+
+		//Castings
+		ssoClaims := tokenClaims.(auth.SSOClaims)
+		var user *models.User
+		isUserRegistered := false
+
+		//If user doesn't exist, it needs to be registered
+		if u == nil {
+			newUser := &models.User{
+				Email:     *ssoClaims.Email,
+				FirstName: ssoClaims.FirstName,
+				LastName:  ssoClaims.LastName,
+				Username:  auth.GenerateUsername(*ssoClaims.Email),
+			}
+
+			if err := newUser.Create(ctx.(context.Context)); err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+				return
+			}
+			newUser.Status = "ACTIVE"
+			if err := newUser.Verify(ctx.(context.Context)); err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+				return
+			}
+
+			user = newUser
+			isUserRegistered = true
+		} else {
+			user = u.(*models.User)
+		}
+
+		tokens, err := auth.GenerateFullTokens(user.ID.String())
+		tokens["registered"] = isUserRegistered
+
+		if err != nil {
+			c.JSON(http.StatusBadRequest, tokens)
+		}
+		c.JSON(http.StatusOK, tokens)
+
+	})
+
 }

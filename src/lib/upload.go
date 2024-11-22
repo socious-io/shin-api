@@ -9,6 +9,7 @@ import (
 	"io"
 	"mime/multipart"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
@@ -31,6 +32,7 @@ var mimeTypeToExt = map[string]string{
 	"image/jpeg":         "jpg",
 	"application/pdf":    "pdf",
 	"application/msword": "doc",
+	"text/csv":           "csv",
 	"application/vnd.openxmlformats-officedocument.wordprocessingml.document": "docx",
 }
 
@@ -52,8 +54,13 @@ func Upload(file multipart.File, fileName string) (string, string) {
 	// Read the first 512 bytes of the file & Detect the file's content type
 	buf := fileContent[:512]
 	mimeType := http.DetectContentType(buf)
+	ext := mimeTypeToExt[mimeType]
+	if mimeType == "application/octet-stream" {
+		splitName := strings.Split(fileName, ".")
+		ext = splitName[len(splitName)-1]
+	}
 
-	filename := fmt.Sprintf("%s.%s", hash, mimeTypeToExt[mimeType])
+	filename := fmt.Sprintf("%s.%s", hash, ext)
 
 	if _, err := S3Client.PutObject(context.TODO(), &s3.PutObjectInput{
 		Bucket: aws.String(S3Config.Bucket),

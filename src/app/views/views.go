@@ -13,4 +13,5 @@ func Init(r *gin.Engine) {
 	recipientsGroup(r)
 	mediaGroup(r)
 	kybVerificationGroup(r)
+	integrationGroup(r)
 }

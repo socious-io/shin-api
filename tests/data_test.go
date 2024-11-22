@@ -3,6 +3,7 @@ package tests_test
 import "github.com/gin-gonic/gin"
 
 var (
+	intKey            = ""
 	authTokens        = []string{}
 	authRefreshTokens = []string{}
 
@@ -21,11 +22,11 @@ var (
 	}
 
 	verificationsData = []gin.H{
-		{"name": "test", "description": "test desc", "attributes": []gin.H{
+		{"name": "test", "description": "test desc", "type": "SINGLE", "attributes": []gin.H{
 			{"operator": "EQUAL", "value": "test"},
 			{"operator": "EQUAL", "value": "test"},
 		}},
-		{"name": "test 2", "description": "test 2 desc", "attributes": []gin.H{
+		{"name": "test 2", "description": "test 2 desc", "type": "MULTI", "attributes": []gin.H{
 			{"operator": "EQUAL", "value": "test"},
 			{"operator": "EQUAL", "value": "test"},
 		}},
