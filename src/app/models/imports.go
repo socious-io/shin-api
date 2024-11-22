@@ -110,3 +110,17 @@ func GetImport(id uuid.UUID) (*Import, error) {
 
 	return i, nil
 }
+
+func GetActiveImportByUserId(userID uuid.UUID) (*Import, error) {
+	i := new(Import)
+	if err := database.Get(i, "imports/fetch_active_by_user", userID); err != nil {
+		return nil, err
+	}
+
+	err := pq.Array(&i.Entities).Scan(i.EntitiesArray)
+	if err != nil {
+		return nil, err
+	}
+
+	return i, nil
+}
