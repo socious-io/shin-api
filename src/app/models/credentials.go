@@ -8,7 +8,6 @@ import (
 	"shin/src/config"
 	"shin/src/database"
 	"shin/src/wallet"
-	"strconv"
 	"time"
 
 	"github.com/google/uuid"
@@ -212,15 +211,7 @@ func GetCredentials(userId uuid.UUID, p database.Paginate) ([]Credential, int, e
 	// TODO: it's temperory solution database.QuerySelect must handle filtering system
 	if len(p.Filters) > 0 && p.Filters[0].Key == "schema_id" {
 
-		sent := true
-		if len(p.Filters) > 1 && p.Filters[1].Key == "sent" {
-			val, err := strconv.ParseBool(p.Filters[1].Value)
-			if err == nil {
-				sent = val
-			}
-		}
-
-		if err := database.QuerySelect("credentials/get_by_schema", &fetchList, userId, p.Limit, p.Offet, p.Filters[0].Value, sent); err != nil {
+		if err := database.QuerySelect("credentials/get_by_schema", &fetchList, userId, p.Limit, p.Offet, p.Filters[0].Value); err != nil {
 			return nil, 0, err
 		}
 
