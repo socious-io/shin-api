@@ -497,6 +497,9 @@ func convertValsToNumber(value interface{}, attrVal string) (int, int, error) {
 		if t, err := time.Parse(time.RFC3339, attrVal); err == nil {
 			return val, int(t.Unix()), nil
 		}
+		if t, err := time.Parse(customDateLayout, attrVal); err == nil {
+			return val, int(t.Unix()), nil
+		}
 	}
 	attrIntVal, err := strconv.Atoi(attrVal)
 	if err != nil {
