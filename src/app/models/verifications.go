@@ -471,8 +471,9 @@ func validateVC(schema Schema, vc wallet.H, attrs []VerificationAttribute) error
 
 func convertValsToNumber(value interface{}, attrVal string) (int, int, error) {
 	var (
-		val    int
-		isTime bool = false
+		customDateLayout = "2006-01-02"
+		val              int
+		isTime           bool = false
 	)
 	switch v := value.(type) {
 	case string:
@@ -484,12 +485,19 @@ func convertValsToNumber(value interface{}, attrVal string) (int, int, error) {
 				val = int(t.Unix())
 				isTime = true
 			}
+			if t, err := time.Parse(customDateLayout, v); err == nil {
+				val = int(t.Unix())
+				isTime = true
+			}
 		}
 	case int:
 		val = v
 	}
 	if isTime {
 		if t, err := time.Parse(time.RFC3339, attrVal); err == nil {
+			return val, int(t.Unix()), nil
+		}
+		if t, err := time.Parse(customDateLayout, attrVal); err == nil {
 			return val, int(t.Unix()), nil
 		}
 	}
