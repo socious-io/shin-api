@@ -5,8 +5,9 @@ import (
 	"net/http"
 	"shin/src/app/auth"
 	"shin/src/app/models"
-	"shin/src/database"
 	"shin/src/utils"
+
+	database "github.com/socious-io/pkg_database"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"

@@ -3,10 +3,11 @@ package main
 import (
 	"shin/src/app"
 	"shin/src/config"
-	"shin/src/database"
 	"shin/src/lib"
 	"shin/src/services"
 	"time"
+
+	database "github.com/socious-io/pkg_database"
 )
 
 func main() {

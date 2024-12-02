@@ -5,8 +5,9 @@ import (
 	"fmt"
 	"shin/src/app/models"
 	"shin/src/config"
-	"shin/src/database"
 	"shin/src/utils"
+
+	database "github.com/socious-io/pkg_database"
 
 	"github.com/google/uuid"
 )

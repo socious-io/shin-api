@@ -3,9 +3,10 @@ package models
 import (
 	"context"
 	"log"
-	"shin/src/database"
 	"shin/src/wallet"
 	"time"
+
+	database "github.com/socious-io/pkg_database"
 
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"

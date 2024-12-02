@@ -2,11 +2,11 @@ package shortner
 
 import (
 	"net/http"
-	"shin/src/database"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	database "github.com/socious-io/pkg_database"
 )
 
 type ShortnerURL struct {
