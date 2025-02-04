@@ -2,7 +2,8 @@ package models
 
 import (
 	"context"
-	"shin/src/database"
+
+	database "github.com/socious-io/pkg_database"
 
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"

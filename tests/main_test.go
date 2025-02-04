@@ -9,10 +9,11 @@ import (
 	"os"
 	"shin/src/app"
 	"shin/src/config"
-	"shin/src/database"
 	"strings"
 	"testing"
 	"time"
+
+	database "github.com/socious-io/pkg_database"
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang-migrate/migrate/v4"

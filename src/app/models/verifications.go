@@ -7,10 +7,11 @@ import (
 	"fmt"
 	"net/url"
 	"shin/src/config"
-	"shin/src/database"
 	"shin/src/wallet"
 	"strconv"
 	"time"
+
+	database "github.com/socious-io/pkg_database"
 
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx/types"

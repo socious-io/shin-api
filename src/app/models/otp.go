@@ -4,8 +4,9 @@ import (
 	"context"
 	"log"
 	"math/rand/v2"
-	"shin/src/database"
 	"time"
+
+	database "github.com/socious-io/pkg_database"
 
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"

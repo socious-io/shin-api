@@ -5,11 +5,12 @@ import (
 	"io"
 	"net/http"
 	"shin/src/config"
-	"shin/src/database"
 	"shin/src/lib"
 	"strconv"
 	"strings"
 	"time"
+
+	database "github.com/socious-io/pkg_database"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
