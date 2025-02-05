@@ -13,12 +13,18 @@ sendgrid:
   disabled: "[true/false]"
   url: "url"
   api_key: "api_key"
-s3:
-  access_key_id: access_key_id
-  secret_access_key: secret_access_key
-  default_region: default_region
-  bucket: default_region
-  cdn_url: https://BUCKET.s3.DEFAULT_REGION.amazonaws.com
+storage:
+  type: "[GCS/AWS]"
+  s3:
+    access_key_id: access_key_id
+    secret_access_key: secret_access_key
+    default_region: ap-northeast-1
+    bucket: shin-s3
+    cdn_url: https://shin-s3.s3.ap-northeast-1.amazonaws.com
+  gcs:
+    bucket: shin-gcs
+    cdn_url: https://storage.googleapis.com/shin-gcs
+    credentials_path: ./gcs-service-account.json
 cors:
   origins:
     - '*'
