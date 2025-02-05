@@ -105,7 +105,7 @@ func UploadGCS(file multipart.File, fileName string) (string, string) {
 	filename := fmt.Sprintf("%s.%s", hash, ext)
 
 	bucket := GCSClient.Bucket(GCSConfig.Bucket)
-	wc := bucket.Object(fileName).NewWriter(GCSContext)
+	wc := bucket.Object(filename).NewWriter(GCSContext)
 	wc.ContentType = mimeType
 
 	wc.Write(fileContent)
