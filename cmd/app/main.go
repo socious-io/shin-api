@@ -22,13 +22,21 @@ func main() {
 
 	services.Connect()
 
-	lib.InitS3Lib(lib.S3ConfigType{
-		AccessKeyId:     config.Config.S3.AccessKeyId,
-		SecretAccessKey: config.Config.S3.SecretAccessKey,
-		DefaultRegion:   config.Config.S3.DefaultRegion,
-		Bucket:          config.Config.S3.Bucket,
-		CDNUrl:          config.Config.S3.CDNUrl,
-	})
+	if config.Config.Storage.Type == "AWS" {
+		lib.InitS3Lib(lib.S3ConfigType{
+			AccessKeyId:     config.Config.Storage.S3.AccessKeyId,
+			SecretAccessKey: config.Config.Storage.S3.SecretAccessKey,
+			DefaultRegion:   config.Config.Storage.S3.DefaultRegion,
+			Bucket:          config.Config.Storage.S3.Bucket,
+			CDNUrl:          config.Config.Storage.S3.CDNUrl,
+		})
+	} else if config.Config.Storage.Type == "GCS" {
+		lib.InitGCSLib(lib.GCSConfigType{
+			Bucket:          config.Config.Storage.GCS.Bucket,
+			CDNUrl:          config.Config.Storage.GCS.CDNUrl,
+			CredentialsPath: config.Config.Storage.GCS.CredentialsPath,
+		})
+	}
 
 	app.Serve()
 }
