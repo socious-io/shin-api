@@ -1,4 +1,4 @@
 INSERT INTO organizations (
-  name, description, logo_id
-) VALUES ( $1, $2, $3)
+  id, name, description, logo
+) VALUES ( $1, $2, $3, $4)
 RETURNING *

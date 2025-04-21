@@ -126,7 +126,7 @@ func kybVerificationGroup(router *gin.Engine) {
 		c.JSON(http.StatusOK, verification)
 	})
 
-	g.GET("/:id/approve", adminAccessRequired(), func(c *gin.Context) {
+	g.GET("/:id/approve", AdminAccessRequired(), func(c *gin.Context) {
 
 		ctx, _ := c.Get("ctx")
 		verificationId := c.Param("id")
@@ -152,7 +152,7 @@ func kybVerificationGroup(router *gin.Engine) {
 		c.JSON(http.StatusOK, gin.H{"message": "success"})
 	})
 
-	g.GET("/:id/reject", adminAccessRequired(), func(c *gin.Context) {
+	g.GET("/:id/reject", AdminAccessRequired(), func(c *gin.Context) {
 		ctx, _ := c.Get("ctx")
 		verificationId := c.Param("id")
 

@@ -6,11 +6,26 @@ import (
 	"github.com/google/uuid"
 )
 
-type OrganizationForm struct {
-	Name        string     `json:"name" validate:"required,min=3,max=32"`
-	Description string     `json:"description" validate:"required,min=3"`
-	LogoID      *uuid.UUID `json:"logo_id"`
+// Authentication
+type AuthForm struct {
+	RedirectURL string `json:"redirect_url" validate:"required"`
 }
+
+type SessionForm struct {
+	Code string `json:"code" validate:"required"`
+}
+
+type SyncForm struct {
+	Organizations []models.Organization `json:"organization"`
+	User          models.User           `json:"users" validate:"required"`
+}
+
+// Others
+// type OrganizationForm struct {
+// 	Name        string     `json:"name" validate:"required,min=3,max=32"`
+// 	Description string     `json:"description" validate:"required,min=3"`
+// 	LogoID      *uuid.UUID `json:"logo_id"`
+// }
 
 type SchemaForm struct {
 	Name        string  `json:"name"`
@@ -78,15 +93,15 @@ type CredentialRecipientForm struct {
 	Recipient  RecipientForm  `json:"recipient"`
 }
 
-type ProfileUpdateForm struct {
-	Username  *string    `json:"username" validate:"required,min=3,max=32"`
-	JobTitle  *string    `json:"job_title"`
-	Bio       *string    `json:"bio"`
-	FirstName string     `json:"first_name" validate:"required,min=3,max=32"`
-	LastName  string     `json:"last_name" validate:"required,min=3,max=32"`
-	Phone     *string    `json:"phone"`
-	AvatarID  *uuid.UUID `json:"avatar_id"`
-}
+// type ProfileUpdateForm struct {
+// 	Username  *string    `json:"username" validate:"required,min=3,max=32"`
+// 	JobTitle  *string    `json:"job_title"`
+// 	Bio       *string    `json:"bio"`
+// 	FirstName string     `json:"first_name" validate:"required,min=3,max=32"`
+// 	LastName  string     `json:"last_name" validate:"required,min=3,max=32"`
+// 	Phone     *string    `json:"phone"`
+// 	AvatarID  *uuid.UUID `json:"avatar_id"`
+// }
 
 type KYBVerificationForm struct {
 	Documents []string `json:"documents"`

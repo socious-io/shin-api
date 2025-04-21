@@ -4,30 +4,28 @@ import (
 	"context"
 	"time"
 
+	"github.com/jmoiron/sqlx/types"
 	database "github.com/socious-io/pkg_database"
 
 	"github.com/google/uuid"
 )
 
 type User struct {
-	ID        uuid.UUID  `db:"id" json:"id"`
-	Username  string     `db:"username" json:"username"`
-	Email     string     `db:"email" json:"email"`
-	Password  *string    `db:"password" json:"-"`
-	JobTitle  *string    `db:"job_title" json:"job_title"`
-	Bio       *string    `db:"bio" json:"bio"`
-	FirstName *string    `db:"first_name" json:"first_name"`
-	LastName  *string    `db:"last_name" json:"last_name"`
-	Phone     *string    `db:"phone" json:"phone"`
-	AvatarID  *uuid.UUID `db:"avatar_id" json:"avatar_id"`
-	Avatar    struct {
-		Url      *string `db:"url" json:"url"`
-		Filename *string `db:"filename" json:"filename"`
-	} `db:"avatar" json:"avatar"`
-	Status          string    `db:"status" json:"status"`
-	PasswordExpired bool      `db:"password_expired" json:"password_expired"`
-	CreatedAt       time.Time `db:"created_at" json:"created_at"`
-	UpdatedAt       time.Time `db:"updated_at" json:"updated_at"`
+	ID              uuid.UUID      `db:"id" json:"id"`
+	Username        string         `db:"username" json:"username"`
+	Email           string         `db:"email" json:"email"`
+	Password        *string        `db:"password" json:"-"`
+	JobTitle        *string        `db:"job_title" json:"job_title"`
+	Bio             *string        `db:"bio" json:"bio"`
+	FirstName       *string        `db:"first_name" json:"first_name"`
+	LastName        *string        `db:"last_name" json:"last_name"`
+	Phone           *string        `db:"phone" json:"phone"`
+	Avatar          *Media         `db:"-" json:"avatar"`
+	AvatarJson      types.JSONText `db:"avatar" json:"-"`
+	Status          string         `db:"status" json:"status"`
+	PasswordExpired bool           `db:"password_expired" json:"password_expired"`
+	CreatedAt       time.Time      `db:"created_at" json:"created_at"`
+	UpdatedAt       time.Time      `db:"updated_at" json:"updated_at"`
 }
 
 func (User) TableName() string {
@@ -47,6 +45,36 @@ func (u *User) Create(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	defer rows.Close()
+	for rows.Next() {
+		if err := rows.StructScan(u); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (u *User) Upsert(ctx context.Context) error {
+	if u.ID == uuid.Nil {
+		newID, err := uuid.NewUUID()
+		if err != nil {
+			return err
+		}
+		u.ID = newID
+	}
+
+	rows, err := database.Query(
+		ctx,
+		"users/upsert",
+		u.ID,
+		u.FirstName, u.LastName, u.Username, u.Email,
+		u.AvatarJson,
+	)
+
+	if err != nil {
+		return err
+	}
+
 	defer rows.Close()
 	for rows.Next() {
 		if err := rows.StructScan(u); err != nil {
@@ -114,7 +142,7 @@ func (u *User) UpdateProfile(ctx context.Context) error {
 	rows, err := database.Query(
 		ctx,
 		"users/update_profile",
-		u.ID, u.FirstName, u.LastName, u.Bio, u.JobTitle, u.Phone, u.Username, u.AvatarID,
+		u.ID, u.FirstName, u.LastName, u.Bio, u.JobTitle, u.Phone, u.Username, u.Avatar,
 	)
 	if err != nil {
 		return err

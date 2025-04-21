@@ -2,8 +2,10 @@ package views
 
 import (
 	"bytes"
+	"fmt"
 	"io"
 	"net/http"
+	"shin/src/app/auth"
 	"shin/src/config"
 	"shin/src/lib"
 	"strconv"
@@ -101,7 +103,7 @@ func GinLoggerMiddleware(logger *lib.GinLogger) gin.HandlerFunc {
 }
 
 // Administration
-func adminAccessRequired() gin.HandlerFunc {
+func AdminAccessRequired() gin.HandlerFunc {
 	return func(c *gin.Context) {
 
 		access_token := c.Query("admin_access_token")
@@ -115,5 +117,18 @@ func adminAccessRequired() gin.HandlerFunc {
 
 		c.Next()
 		return
+	}
+}
+
+func AccountCenterRequired() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		raw := fmt.Sprintf("%s:%s", config.Config.GoAccounts.ID, config.Config.GoAccounts.Secret)
+		hash, _ := auth.HashPassword(raw)
+		if hash != c.Request.Header.Get("x-account-center") {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Account center required"})
+			c.Abort()
+			return
+		}
+		c.Next()
 	}
 }

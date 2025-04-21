@@ -2,6 +2,7 @@ package models
 
 import (
 	"context"
+	"encoding/json"
 	"log"
 	"shin/src/wallet"
 	"time"
@@ -10,18 +11,16 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
+	"github.com/jmoiron/sqlx/types"
 )
 
 type Organization struct {
-	ID          uuid.UUID  `db:"id" json:"id"`
-	DID         *string    `db:"did" json:"did"`
-	Name        string     `db:"name" json:"name"`
-	Description string     `db:"description" json:"description"`
-	LogoID      *uuid.UUID `db:"logo_id" json:"logo_id"`
-	Logo        struct {
-		Url      *string `db:"url" json:"url"`
-		Filename *string `db:"filename" json:"filename"`
-	} `db:"logo" json:"logo"`
+	ID                 uuid.UUID                  `db:"id" json:"id"`
+	DID                *string                    `db:"did" json:"did"`
+	Name               string                     `db:"name" json:"name"`
+	Description        string                     `db:"description" json:"description"`
+	Logo               *Media                     `db:"-" json:"logo"`
+	LogoJson           types.JSONText             `db:"logo" json:"-"`
 	IsVerified         bool                       `db:"is_verified" json:"is_verified"`
 	VerificationStatus *KybVerificationStatusType `db:"verification_status" json:"verification_status"`
 	UpdatedAt          time.Time                  `db:"updated_at" json:"updated_at"`
@@ -53,12 +52,45 @@ func (o *Organization) Create(ctx context.Context, userID uuid.UUID) error {
 	if err != nil {
 		return err
 	}
-	rows, err := database.TxQuery(ctx, tx, "organizations/create",
-		o.Name, o.Description, o.LogoID,
+
+	if o.Logo != nil {
+		b, _ := json.Marshal(o.Logo)
+		o.LogoJson.Scan(b)
+	}
+
+	if o.ID == uuid.Nil {
+		newID, err := uuid.NewUUID()
+		if err != nil {
+			return err
+		}
+		o.ID = newID
+	}
+
+	// o.IsVerified = false //TODO: Handle verification
+	// if o.Verified || o.VerifiedImpact {
+	// 	o.IsVerified = true
+	// }
+
+	rows, err := database.TxQuery(
+		ctx,
+		tx,
+		"organizations/create",
+		o.ID,
+		o.Name,
+		o.Description,
+		o.LogoJson,
 	)
 	if err != nil {
 		tx.Rollback()
 		return err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		if err := rows.StructScan(o); err != nil {
+			tx.Rollback()
+			return err
+		}
 	}
 
 	for rows.Next() {
@@ -104,7 +136,7 @@ func (o *Organization) NewDID(ctx context.Context) error {
 func (o *Organization) Update(ctx context.Context) error {
 	rows, err := database.Query(
 		ctx, "organizations/update",
-		o.ID, o.Name, o.Description, o.LogoID,
+		o.ID, o.Name, o.Description, o.Logo,
 	)
 	if err != nil {
 		return err
