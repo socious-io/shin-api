@@ -3,6 +3,7 @@ package models
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"shin/src/wallet"
 	"time"
@@ -21,7 +22,7 @@ type Organization struct {
 	Description        string                     `db:"description" json:"description"`
 	Logo               *Media                     `db:"-" json:"logo"`
 	LogoJson           types.JSONText             `db:"logo" json:"-"`
-	IsVerified         bool                       `db:"is_verified" json:"is_verified"`
+	Verified           bool                       `db:"verified" json:"verified"`
 	VerificationStatus *KybVerificationStatusType `db:"verification_status" json:"verification_status"`
 	UpdatedAt          time.Time                  `db:"updated_at" json:"updated_at"`
 	CreatedAt          time.Time                  `db:"created_at" json:"created_at"`
@@ -66,11 +67,6 @@ func (o *Organization) Create(ctx context.Context, userID uuid.UUID) error {
 		o.ID = newID
 	}
 
-	// o.IsVerified = false //TODO: Handle verification
-	// if o.Verified || o.VerifiedImpact {
-	// 	o.IsVerified = true
-	// }
-
 	rows, err := database.TxQuery(
 		ctx,
 		tx,
@@ -79,9 +75,11 @@ func (o *Organization) Create(ctx context.Context, userID uuid.UUID) error {
 		o.Name,
 		o.Description,
 		o.LogoJson,
+		o.Verified,
 	)
 	if err != nil {
 		tx.Rollback()
+		fmt.Println(err)
 		return err
 	}
 	defer rows.Close()
@@ -100,6 +98,7 @@ func (o *Organization) Create(ctx context.Context, userID uuid.UUID) error {
 		}
 	}
 	rows.Close()
+
 	// Creating default member
 	rows, err = database.TxQuery(ctx, tx, "organizations/add_member",
 		userID, o.ID,
@@ -109,6 +108,7 @@ func (o *Organization) Create(ctx context.Context, userID uuid.UUID) error {
 		return err
 	}
 	rows.Close()
+
 	return tx.Commit()
 }
 

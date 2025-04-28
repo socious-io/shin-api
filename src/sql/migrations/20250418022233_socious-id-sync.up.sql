@@ -29,3 +29,6 @@ CREATE TABLE oauth_connects (
 
 CREATE UNIQUE INDEX unique_provider_mui
 ON oauth_connects (matrix_unique_id, provider);
+
+ALTER TABLE organizations
+RENAME COLUMN is_verified TO verified;

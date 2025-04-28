@@ -2,6 +2,7 @@ package models
 
 import (
 	"context"
+	"encoding/json"
 	"time"
 
 	"github.com/jmoiron/sqlx/types"
@@ -55,6 +56,11 @@ func (u *User) Create(ctx context.Context) error {
 }
 
 func (u *User) Upsert(ctx context.Context) error {
+	if u.Avatar != nil {
+		b, _ := json.Marshal(u.Avatar)
+		u.AvatarJson.Scan(b)
+	}
+
 	if u.ID == uuid.Nil {
 		newID, err := uuid.NewUUID()
 		if err != nil {
@@ -67,7 +73,12 @@ func (u *User) Upsert(ctx context.Context) error {
 		ctx,
 		"users/upsert",
 		u.ID,
-		u.FirstName, u.LastName, u.Username, u.Email,
+		u.FirstName,
+		u.LastName,
+		u.Username,
+		u.Email,
+		u.Bio,
+		u.Phone,
 		u.AvatarJson,
 	)
 
