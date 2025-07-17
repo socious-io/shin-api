@@ -6,6 +6,6 @@ SET
     job_title = COALESCE($5, job_title),
     phone = COALESCE($6, phone),
     username = COALESCE($7, username),
-    avatar_id = COALESCE($8, avatar_id)
+    avatar = COALESCE($8, avatar)
 WHERE id = $1
 RETURNING *;

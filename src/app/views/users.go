@@ -38,4 +38,5 @@ func userGroup(router *gin.Engine) {
 
 		c.JSON(http.StatusAccepted, u)
 	})
+
 }

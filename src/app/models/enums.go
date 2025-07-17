@@ -218,3 +218,25 @@ func (ost *OperationServiceTrigger) Scan(value interface{}) error {
 func (ost OperationServiceTrigger) Value() (driver.Value, error) {
 	return string(ost), nil
 }
+
+type OauthConnectedProviders string
+
+const (
+	OauthConnectedProvidersSociousID OauthConnectedProviders = "SOCIOUS_ID"
+)
+
+func (oac *OauthConnectedProviders) Scan(value interface{}) error {
+	switch v := value.(type) {
+	case []byte:
+		*oac = OauthConnectedProviders(string(v))
+	case string:
+		*oac = OauthConnectedProviders(v)
+	default:
+		return fmt.Errorf("failed to scan operator type: %v", value)
+	}
+	return nil
+}
+
+func (oac OauthConnectedProviders) Value() (driver.Value, error) {
+	return string(oac), nil
+}
