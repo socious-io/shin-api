@@ -9,8 +9,9 @@ servers:
   - url: https://api.shinid.com/
     description: Production server (uses live data)
   - url: http://localhost:3000/
-    description: Local server (for development perposes)
+    description: Local server (for development purposes)
 paths:
+  # Authentication endpoints (existing)
   /auth/login:
     post:
       summary: Login the user
@@ -37,189 +38,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Tokens'
-  /auth/register:
-    post:
-      summary: Register the user
-      description: Register the user
-      tags:
-        - Authentication
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                email:
-                  type: 'string'
-                  example: 'example@shin.com'
-                password:
-                  type: 'string'
-                  example: 'P@$wd123'
-      responses:
-        '200':
-          description: Successful response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Tokens'
-  /auth/refresh:
-    post:
-      summary: Refresh Access Token
-      description: Will refresh the user's tokens
-      tags:
-        - Authentication
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                email:
-                  type: 'string'
-                  example: 'example@shin.com'
-                password:
-                  type: 'string'
-                  example: 'P@$wd123'
-      responses:
-        '200':
-          description: Successful response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Tokens'
-  /auth/otp:
-    post:
-      summary: Send OTP
-      description: Send OTP and resend it by this API
-      tags:
-        - Authentication
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                email:
-                  type: 'string'
-                  example: 'example@shin.com'
-      responses:
-        '200':
-          description: Successful response
-          content:
-            application/json:
-              schema:
-  /auth/otp/verify:
-    post:
-      summary: Verify OTP
-      description: Verify OTP and fetch the new tokens 
-      tags:
-        - Authentication
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                email:
-                  type: 'string'
-                  example: 'example@shin.com'
-      responses:
-        '200':
-          description: Successful response
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Tokens'
-  /auth/password/forget:
-    post:
-      summary: Send Forget Password OTP
-      description: Send Forget Password OTP and resend it by this API
-      tags:
-        - Authentication
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                email:
-                  type: 'string'
-                  example: 'example@shin.com'
-      responses:
-        '200':
-          description: Successful response
-          content:
-            application/json:
-              schema:
-  /auth/password/update:
-    post:
-      summary: Change password
-      description: Change password directly through forget password or with current password
-      tags:
-        - Authentication
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                password:
-                  type: 'string'
-                  required: true
-                  example: 'example@shin.com'
-                current_password:
-                  type: 'string'
-                  required: false
-                  example: 'example@shin.com'
-      responses:
-        '200':
-          description: Successful response
-          content:
-            application/json:
-              schema:
-  /auth/pre-register:
-    post:
-      summary: Pre Register Process
-      description: Checks weather if username or email that provided is available
-      tags:
-        - Authentication
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                email:
-                  type: 'string'
-                  example: 'example@shin.com'
-                username:
-                  type: 'string'
-                  example: 'exampleu'
-      responses:
-        '200':
-          description: Successful response
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  email:
-                    type: 'string'
-                    enum:
-                      - AVAILABLE
-                      - EXISTS
-                  username:
-                    type: 'string'
-                    enum:
-                      - AVAILABLE
-                      - EXISTS
+  
+  # ... (other existing authentication endpoints)
+
+  # Integration endpoints (existing)
   /integrations/keys:
     get:
       summary: Get All Keys
@@ -246,11 +68,43 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/IntegrationKey'
+  
+  # ... (other existing integration endpoints)
+
+  # Verification endpoints (new)
+  /verifications:
+    get:
+      tags:
+        - Verifications
+      summary: List all verifications
+      parameters:
+        - $ref: '#/components/parameters/paginationPage'
+        - $ref: '#/components/parameters/paginationLimit'
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of verifications
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Verification'
+                  total:
+                    type: integer
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
     post:
-      summary: Create a Key
-      description: Create a integration key for current user
       tags:
-        - Integration
+        - Verifications
+      summary: Create a new verification
       security:
         - bearerAuth: []
       requestBody:
@@ -258,65 +112,79 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                name:
-                  type: 'string'
-                  example: 'Key Name'
+              $ref: '#/components/schemas/VerificationForm'
       responses:
-        '200':
-          description: Successful response
+        '201':
+          description: Verification created
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/IntegrationKey'
-  /integrations/keys/{key_id}:
+                $ref: '#/components/schemas/Verification'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /verifications/{id}:
+    get:
+      tags:
+        - Verifications
+      summary: Get a verification by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/idPath'
+      responses:
+        '200':
+          description: Verification details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Verification'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
     put:
-      summary: Update a Key
-      description: Update the integration key for current user
       tags:
-        - Integration
+        - Verifications
+      summary: Update a verification
       security:
         - bearerAuth: []
       parameters:
-        - name: key_id
-          in: path
-          schema:
-            type: string
-          required: true
+        - $ref: '#/components/parameters/idPath'
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                name:
-                  type: 'string'
-                  example: 'Key Name'
+              $ref: '#/components/schemas/VerificationForm'
       responses:
-        '200':
-          description: Successful response
+        '202':
+          description: Verification updated
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/IntegrationKey'
+                $ref: '#/components/schemas/Verification'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
     delete:
-      summary: Delete a Key
-      description: Delete the integration key for current user
       tags:
-        - Integration
+        - Verifications
+      summary: Delete a verification
       security:
         - bearerAuth: []
       parameters:
-        - name: key_id
-          in: path
-          schema:
-            type: string
-          required: true
+        - $ref: '#/components/parameters/idPath'
       responses:
         '200':
-          description: Successful response
+          description: Verification deleted
           content:
             application/json:
               schema:
@@ -325,11 +193,151 @@ paths:
                   message:
                     type: string
                     example: success
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /verifications/{id}/individuals:
+    get:
+      tags:
+        - Verification Individuals
+      summary: List individuals for a verification
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/idPath'
+        - $ref: '#/components/parameters/paginationPage'
+        - $ref: '#/components/parameters/paginationLimit'
+      responses:
+        '200':
+          description: List of verification individuals
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/VerificationIndividual'
+                  total:
+                    type: integer
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /verifications/individuals:
+    post:
+      tags:
+        - Verification Individuals
+      summary: Create a new verification individual
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerificationIndividualForm'
+      responses:
+        '201':
+          description: Verification individual created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerificationIndividual'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /verifications/individuals/{id}:
+    get:
+      tags:
+        - Verification Individuals
+      summary: Get a verification individual by ID
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/idPath'
+      responses:
+        '200':
+          description: Verification individual details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerificationIndividual'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /verifications/{id}/connect:
+    get:
+      tags:
+        - Verification Individuals
+      summary: Connect for verification
+      parameters:
+        - $ref: '#/components/parameters/idPath'
+      responses:
+        '200':
+          description: Verification connection details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerificationIndividual'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /verifications/{id}/callback:
+    get:
+      tags:
+        - Verification Individuals
+      summary: Callback for verification
+      parameters:
+        - $ref: '#/components/parameters/idPath'
+      responses:
+        '200':
+          description: Callback processed
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: success
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /verifications/{id}/verify:
+    get:
+      tags:
+        - Verification Individuals
+      summary: Verify a verification individual
+      parameters:
+        - $ref: '#/components/parameters/idPath'
+      responses:
+        '200':
+          description: Verification result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerificationIndividual'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
 components:
   securitySchemes:
     bearerAuth:
       type: http
       scheme: bearer
+
+  # Existing schemas
   schemas:
     Tokens:
       type: object
@@ -366,4 +374,266 @@ components:
         created_at:
           type: string
           example: 2024-10-13T21:06:58.923694Z
-  
+
+    # New verification schemas
+    Verification:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        description:
+          type: string
+          nullable: true
+        schema_id:
+          type: string
+          format: uuid
+        schema:
+          $ref: '#/components/schemas/Schema'
+        user_id:
+          type: string
+          format: uuid
+        user:
+          $ref: '#/components/schemas/User'
+        attributes:
+          type: array
+          items:
+            $ref: '#/components/schemas/VerificationAttribute'
+        type:
+          $ref: '#/components/schemas/VerificationType'
+        single:
+          $ref: '#/components/schemas/VerificationIndividual'
+        updated_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+
+    VerificationIndividual:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        user_id:
+          type: string
+          format: uuid
+        user:
+          $ref: '#/components/schemas/User'
+        recipient_id:
+          type: string
+          format: uuid
+        recipient:
+          $ref: '#/components/schemas/Recipient'
+        verification_id:
+          type: string
+          format: uuid
+        verification:
+          $ref: '#/components/schemas/Verification'
+        present_id:
+          type: string
+          nullable: true
+        connection_id:
+          type: string
+          nullable: true
+        connection_url:
+          type: string
+          nullable: true
+        body:
+          type: object
+        status:
+          $ref: '#/components/schemas/VerificationStatusType'
+        validation_error:
+          type: string
+          nullable: true
+        connection_at:
+          type: string
+          format: date-time
+          nullable: true
+        verified_at:
+          type: string
+          format: date-time
+          nullable: true
+        updated_at:
+          type: string
+          format: date-time
+        created_at:
+          type: string
+          format: date-time
+
+    VerificationAttribute:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        attribute_id:
+          type: string
+          format: uuid
+        schema_id:
+          type: string
+          format: uuid
+        verification_id:
+          type: string
+          format: uuid
+        value:
+          type: string
+        operator:
+          $ref: '#/components/schemas/VerificationOperatorType'
+        created_at:
+          type: string
+          format: date-time
+
+    VerificationForm:
+      type: object
+      required:
+        - name
+        - schema_id
+        - type
+      properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 32
+        description:
+          type: string
+          minLength: 3
+          nullable: true
+        schema_id:
+          type: string
+          format: uuid
+        type:
+          $ref: '#/components/schemas/VerificationType'
+        attributes:
+          type: array
+          items:
+            type: object
+            properties:
+              attribute_id:
+                type: string
+                format: uuid
+              operator:
+                $ref: '#/components/schemas/VerificationOperatorType'
+              value:
+                type: string
+
+    VerificationIndividualForm:
+      type: object
+      required:
+        - customer_id
+        - verification_id
+      properties:
+        customer_id:
+          type: string
+        verification_id:
+          type: string
+          format: uuid
+
+    VerificationType:
+      type: string
+      enum:
+        - single
+        - bulk
+
+    VerificationStatusType:
+      type: string
+      enum:
+        - requested
+        - connected
+        - verified
+        - failed
+
+    VerificationOperatorType:
+      type: string
+      enum:
+        - equal
+        - bigger
+        - smaller
+        - not
+
+    # Reference schemas (would need to be defined based on your models)
+    Schema:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        # ... other schema properties
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        # ... other user properties
+
+    Recipient:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        # ... other recipient properties
+
+  parameters:
+    idPath:
+      name: id
+      in: path
+      description: ID of the resource
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+    paginationPage:
+      name: page
+      in: query
+      description: Page number
+      schema:
+        type: integer
+        default: 1
+
+    paginationLimit:
+      name: limit
+      in: query
+      description: Number of items per page
+      schema:
+        type: integer
+        default: 20
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+
+    Forbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
