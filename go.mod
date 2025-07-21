@@ -106,6 +106,7 @@ require (
 	github.com/sendgrid/rest v2.6.9+incompatible // indirect
 	github.com/sendgrid/sendgrid-go v3.15.0+incompatible // indirect
 	github.com/sirupsen/logrus v1.9.3 // indirect
+	github.com/socious-io/goaccount v0.1.7
 	github.com/socious-io/gomq v0.2.1 // indirect
 	github.com/socious-io/pkg_database v1.0.0 // indirect
 	github.com/sony/gobreaker v1.0.0 // indirect

@@ -4,12 +4,28 @@ import (
 	"shin/src/app/models"
 
 	"github.com/google/uuid"
+	"github.com/jmoiron/sqlx/types"
 )
 
+// Authentication
+type AuthForm struct {
+	RedirectURL string `json:"redirect_url" validate:"required"`
+}
+
+type SessionForm struct {
+	Code string `json:"code" validate:"required"`
+}
+
+type SyncForm struct {
+	Organizations []models.Organization `json:"organization"`
+	User          models.User           `json:"users" validate:"required"`
+}
+
+// Others
 type OrganizationForm struct {
-	Name        string     `json:"name" validate:"required,min=3,max=32"`
-	Description string     `json:"description" validate:"required,min=3"`
-	LogoID      *uuid.UUID `json:"logo_id"`
+	Name        string          `json:"name" validate:"required,min=3,max=32"`
+	Description string          `json:"description" validate:"required,min=3"`
+	Logo        *types.JSONText `json:"logo"`
 }
 
 type SchemaForm struct {
@@ -79,13 +95,13 @@ type CredentialRecipientForm struct {
 }
 
 type ProfileUpdateForm struct {
-	Username  *string    `json:"username" validate:"required,min=3,max=32"`
-	JobTitle  *string    `json:"job_title"`
-	Bio       *string    `json:"bio"`
-	FirstName string     `json:"first_name" validate:"required,min=3,max=32"`
-	LastName  string     `json:"last_name" validate:"required,min=3,max=32"`
-	Phone     *string    `json:"phone"`
-	AvatarID  *uuid.UUID `json:"avatar_id"`
+	Username  *string         `json:"username" validate:"required,min=3,max=32"`
+	JobTitle  *string         `json:"job_title"`
+	Bio       *string         `json:"bio"`
+	FirstName string          `json:"first_name" validate:"required,min=3,max=32"`
+	LastName  string          `json:"last_name" validate:"required,min=3,max=32"`
+	Phone     *string         `json:"phone"`
+	Avatar    *types.JSONText `json:"avatar"`
 }
 
 type KYBVerificationForm struct {

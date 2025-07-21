@@ -256,6 +256,8 @@ github.com/sendgrid/sendgrid-go v3.15.0+incompatible h1:oB6ujJD2aFcQRjmZLmmXiiUF
 github.com/sendgrid/sendgrid-go v3.15.0+incompatible/go.mod h1:QRQt+LX/NmgVEvmdRw0VT/QgUn499+iza2FnDca9fg8=
 github.com/sirupsen/logrus v1.9.3 h1:dueUQJ1C2q9oE3F7wvmSGAaVtTmUizReu6fjN8uqzbQ=
 github.com/sirupsen/logrus v1.9.3/go.mod h1:naHLuLoDiP4jHNo9R0sCBMtWGeIprob74mVsIT4qYEQ=
+github.com/socious-io/goaccount v0.1.7 h1:LBD1/dgWFVNsnoKuwNRUUwAKBKeR405Xki/1slQCfOQ=
+github.com/socious-io/goaccount v0.1.7/go.mod h1:K7ytNN/khoKgWYsn2Un56RNA8uvd881f/jFtSoAkqTw=
 github.com/socious-io/gomq v0.2.1 h1:AhjpRugviY+dm+74TnUiopLs+l3eACKW3wasjW5HEPE=
 github.com/socious-io/gomq v0.2.1/go.mod h1:1id1vbRoza/j6BQGuXYYrzwbOOeq2Ii97U2bkwuSIoQ=
 github.com/socious-io/pkg_database v1.0.0 h1:y7VNH6IDE49qGBgiseCsMA0h3FRWvmR5jpwtMryl5ow=
