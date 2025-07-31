@@ -25,7 +25,6 @@ require (
 	github.com/socious-io/goaccount v0.1.97
 	github.com/socious-io/pkg_database v1.0.0
 	github.com/spf13/viper v1.19.0
-	golang.org/x/crypto v0.38.0
 	google.golang.org/api v0.214.0
 )
 
@@ -127,6 +126,7 @@ require (
 	go.uber.org/atomic v1.11.0 // indirect
 	go.uber.org/multierr v1.9.0 // indirect
 	golang.org/x/arch v0.8.0 // indirect
+	golang.org/x/crypto v0.38.0 // indirect
 	golang.org/x/exp v0.0.0-20240719175910-8a7402abbf56 // indirect
 	golang.org/x/net v0.34.0 // indirect
 	golang.org/x/oauth2 v0.24.0 // indirect
