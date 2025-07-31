@@ -125,4 +125,4 @@ jobs:
         run: |
           docker pull ${{ steps.meta-worker.outputs.tags }}
           docker ps -qa --filter "name=shin-api-worker" | grep -q . && docker stop shin-api-worker && docker rm -fv shin-api-worker
-          docker run -d --restart always -h shin-api-worker -v /etc/shin-api/share:/var/lib/share --network shinapi_default --name shin-api-worker ${{ steps.meta-worker.outputs.tags }}
+          docker run -d --restart always -h shin-api-worker -v /etc/shin-api/share:/var/lib/share --network shinapi_default --name shin-api-worker --cpus="0.05" ${{ steps.meta-worker.outputs.tags }}

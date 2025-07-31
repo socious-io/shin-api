@@ -3,7 +3,6 @@ package views
 import (
 	"context"
 	"net/http"
-	"shin/src/app/auth"
 	"shin/src/app/models"
 	"shin/src/utils"
 
@@ -15,7 +14,7 @@ import (
 
 func recipientsGroup(router *gin.Engine) {
 	g := router.Group("recipients")
-	g.Use(auth.AuthRequired())
+	g.Use(AuthRequired())
 
 	g.GET("", paginate(), func(c *gin.Context) {
 		u, _ := c.Get("user")

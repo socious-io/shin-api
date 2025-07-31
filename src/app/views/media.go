@@ -3,7 +3,6 @@ package views
 import (
 	"context"
 	"net/http"
-	"shin/src/app/auth"
 	"shin/src/app/models"
 	"shin/src/lib"
 
@@ -14,7 +13,7 @@ import (
 func mediaGroup(router *gin.Engine) {
 	g := router.Group("media")
 
-	g.GET("/:id", auth.LoginRequired(), func(c *gin.Context) {
+	g.GET("/:id", LoginRequired(), func(c *gin.Context) {
 		id := c.Param("id")
 		m, err := models.GetMedia(uuid.MustParse(id))
 		if err != nil {
@@ -27,7 +26,7 @@ func mediaGroup(router *gin.Engine) {
 		c.JSON(http.StatusOK, m)
 	})
 
-	g.POST("/upload", auth.LoginRequired(), func(c *gin.Context) {
+	g.POST("/upload", LoginRequired(), func(c *gin.Context) {
 
 		file, header, err := c.Request.FormFile("file")
 		if err != nil {

@@ -8,6 +8,45 @@ import (
 )
 
 // Authentication
+type RegisterForm struct {
+	FirstName *string `json:"first_name"`
+	LastName  *string `json:"last_name"`
+	Username  *string `json:"username"`
+	Email     string  `json:"email" validate:"required,email"`
+	Password  *string `json:"password"`
+}
+
+type LoginForm struct {
+	Email    string `json:"email" validate:"required,email"`
+	Password string `json:"password" validate:"required,min=8"`
+}
+
+type OTPSendForm struct {
+	Email string `json:"email" validate:"required,email"`
+}
+type OTPConfirmForm struct {
+	Email string `json:"email" validate:"required,email"`
+	Code  int    `json:"code" validate:"required"`
+}
+
+type RefreshTokenForm struct {
+	RefreshToken string `json:"refresh_token" validate:"required"`
+}
+
+type PreRegisterForm struct {
+	Email    *string `json:"email" validate:"email"`
+	Username *string `json:"username"`
+}
+
+type NormalPasswordChangeForm struct {
+	CurrentPassword string `json:"current_password" validate:"required"`
+	Password        string `json:"password" validate:"required"`
+}
+
+type DirectPasswordChangeForm struct {
+	Password string `json:"password" validate:"required"`
+}
+
 type AuthForm struct {
 	RedirectURL string `json:"redirect_url" validate:"required"`
 }

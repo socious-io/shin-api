@@ -4,7 +4,6 @@ import (
 	"context"
 	"net/http"
 	"net/url"
-	"shin/src/app/auth"
 	"shin/src/app/models"
 	"shin/src/config"
 	"shin/src/utils"
@@ -20,7 +19,7 @@ import (
 func verificationsGroup(router *gin.Engine) {
 	g := router.Group("verifications")
 
-	g.GET("", paginate(), auth.LoginRequired(), func(c *gin.Context) {
+	g.GET("", paginate(), LoginRequired(), func(c *gin.Context) {
 		u, _ := c.Get("user")
 		page, _ := c.Get("paginate")
 		verifications, total, err := models.GetVerifications(u.(*models.User).ID, page.(database.Paginate))
@@ -34,7 +33,7 @@ func verificationsGroup(router *gin.Engine) {
 		})
 	})
 
-	g.GET("/:id/individuals", paginate(), auth.LoginRequired(), func(c *gin.Context) {
+	g.GET("/:id/individuals", paginate(), LoginRequired(), func(c *gin.Context) {
 		u, _ := c.Get("user")
 		page, _ := c.Get("paginate")
 		id := c.Param("id")
@@ -49,7 +48,7 @@ func verificationsGroup(router *gin.Engine) {
 		})
 	})
 
-	g.GET("/:id", auth.LoginRequired(), func(c *gin.Context) {
+	g.GET("/:id", LoginRequired(), func(c *gin.Context) {
 		id := c.Param("id")
 		v, err := models.GetVerification(uuid.MustParse(id))
 		if err != nil {
@@ -59,7 +58,7 @@ func verificationsGroup(router *gin.Engine) {
 		c.JSON(http.StatusOK, v)
 	})
 
-	g.GET("/individuals/:id", auth.LoginRequired(), func(c *gin.Context) {
+	g.GET("/individuals/:id", LoginRequired(), func(c *gin.Context) {
 		id := c.Param("id")
 		v, err := models.GetVerificationsIndividual(uuid.MustParse(id))
 		if err != nil {
@@ -69,7 +68,7 @@ func verificationsGroup(router *gin.Engine) {
 		c.JSON(http.StatusOK, v)
 	})
 
-	g.POST("individuals", auth.AuthRequired(), func(c *gin.Context) {
+	g.POST("individuals", AuthRequired(), func(c *gin.Context) {
 		form := new(VerificationIndividualForm)
 		if err := c.ShouldBindJSON(form); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -141,7 +140,7 @@ func verificationsGroup(router *gin.Engine) {
 		c.JSON(http.StatusOK, v)
 	})
 
-	g.POST("", auth.LoginRequired(), func(c *gin.Context) {
+	g.POST("", LoginRequired(), func(c *gin.Context) {
 		form := new(VerificationForm)
 		if err := c.ShouldBindJSON(form); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -159,7 +158,7 @@ func verificationsGroup(router *gin.Engine) {
 		c.JSON(http.StatusCreated, v)
 	})
 
-	g.PUT("/:id", auth.LoginRequired(), func(c *gin.Context) {
+	g.PUT("/:id", LoginRequired(), func(c *gin.Context) {
 		form := new(VerificationForm)
 		if err := c.ShouldBindJSON(form); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -187,7 +186,7 @@ func verificationsGroup(router *gin.Engine) {
 		c.JSON(http.StatusAccepted, v)
 	})
 
-	g.DELETE("/:id", auth.LoginRequired(), func(c *gin.Context) {
+	g.DELETE("/:id", LoginRequired(), func(c *gin.Context) {
 		id := c.Param("id")
 		v, err := models.GetVerification(uuid.MustParse(id))
 		if err != nil {

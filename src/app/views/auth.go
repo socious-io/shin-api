@@ -4,12 +4,15 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"math"
+	"math/rand/v2"
 	"net/http"
-	"shin/src/app/auth"
+	"regexp"
 	"shin/src/app/models"
 	"shin/src/services"
 	"shin/src/utils"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -26,7 +29,7 @@ func authGroup(router *gin.Engine) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
-		session, authURL, err := goaccount.StartSession(form.RedirectURL)
+		session, authURL, err := goaccount.StartSession(form.RedirectURL, goaccount.AuthModeLogin)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
@@ -38,14 +41,7 @@ func authGroup(router *gin.Engine) {
 	})
 
 	g.POST("/session", func(c *gin.Context) {
-		ctx := c.MustGet("ctx").(context.Context)
 		form := new(SessionForm)
-
-		var (
-			connect *models.OauthConnect
-			user    = new(models.User)
-		)
-
 		if err := c.ShouldBindJSON(form); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
@@ -55,10 +51,18 @@ func authGroup(router *gin.Engine) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
-		if err := token.GetUserProfile(user); err != nil {
+
+		var (
+			connect *models.OauthConnect
+			user    = new(models.User)
+			ctx     = c.MustGet("ctx").(context.Context)
+		)
+		u, err := token.GetUserProfile()
+		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
+		utils.Copy(u, user)
 
 		if connect, err = models.GetOauthConnectByMUI(user.ID.String(), models.OauthConnectedProvidersSociousID); err != nil {
 			connect = &models.OauthConnect{
@@ -75,10 +79,15 @@ func authGroup(router *gin.Engine) {
 			return
 		}
 
-		var orgs = []models.Organization{}
-		token.GetMyOrganizations(&orgs)
+		orgs, err := token.GetMyOrganizations()
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
 
-		for _, o := range orgs {
+		for _, org := range orgs {
+			var o = new(models.Organization)
+			utils.Copy(org, o)
 			if err := o.Create(ctx, user.ID); err != nil {
 				log.Println(err.Error(), o)
 			}
@@ -88,7 +97,7 @@ func authGroup(router *gin.Engine) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
-		jwt, err := auth.GenerateFullTokens(user.ID.String())
+		jwt, err := goaccount.GenerateFullTokens(user.ID.String())
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
@@ -97,7 +106,7 @@ func authGroup(router *gin.Engine) {
 	})
 
 	g.POST("/login", func(c *gin.Context) {
-		form := new(auth.LoginForm)
+		form := new(LoginForm)
 		if err := c.ShouldBindJSON(form); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
@@ -111,12 +120,12 @@ func authGroup(router *gin.Engine) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "email/password not match"})
 			return
 		}
-		if err := auth.CheckPasswordHash(form.Password, *u.Password); err != nil {
+		if err := goaccount.CheckPasswordHash(form.Password, *u.Password); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "email/password not match"})
 			return
 		}
 
-		tokens, err := auth.GenerateFullTokens(u.ID.String())
+		tokens, err := goaccount.GenerateFullTokens(u.ID.String())
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
@@ -126,7 +135,7 @@ func authGroup(router *gin.Engine) {
 	})
 
 	g.POST("/register", func(c *gin.Context) {
-		form := new(auth.RegisterForm)
+		form := new(RegisterForm)
 		if err := c.ShouldBindJSON(form); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
@@ -134,12 +143,12 @@ func authGroup(router *gin.Engine) {
 		u := new(models.User)
 		utils.Copy(form, u)
 		if form.Password != nil {
-			password, _ := auth.HashPassword(*form.Password)
+			password, _ := goaccount.HashPassword(*form.Password)
 			u.Password = &password
 		}
 
 		if form.Username == nil {
-			u.Username = auth.GenerateUsername(u.Email)
+			u.Username = GenerateUsername(u.Email)
 		}
 
 		ctx, _ := c.Get("ctx")
@@ -172,13 +181,13 @@ func authGroup(router *gin.Engine) {
 	})
 
 	g.POST("/refresh", func(c *gin.Context) {
-		form := new(auth.RefreshTokenForm)
+		form := new(RefreshTokenForm)
 		if err := c.ShouldBindJSON(form); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
 
-		claims, err := auth.VerifyToken(form.RefreshToken)
+		claims, err := goaccount.VerifyToken(form.RefreshToken)
 
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -194,7 +203,7 @@ func authGroup(router *gin.Engine) {
 			return
 		}
 
-		tokens, err := auth.GenerateFullTokens(claims.ID)
+		tokens, err := goaccount.GenerateFullTokens(claims.ID)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
@@ -204,7 +213,7 @@ func authGroup(router *gin.Engine) {
 	})
 
 	g.POST("/otp", func(c *gin.Context) {
-		form := new(auth.OTPSendForm)
+		form := new(OTPSendForm)
 		if err := c.ShouldBindJSON(form); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
@@ -257,7 +266,7 @@ func authGroup(router *gin.Engine) {
 	})
 
 	g.POST("/otp/resend", func(c *gin.Context) {
-		form := new(auth.OTPSendForm)
+		form := new(OTPSendForm)
 		if err := c.ShouldBindJSON(form); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
@@ -312,7 +321,7 @@ func authGroup(router *gin.Engine) {
 	})
 
 	g.POST("/otp/verify", func(c *gin.Context) {
-		form := new(auth.OTPConfirmForm)
+		form := new(OTPConfirmForm)
 		if err := c.ShouldBindJSON(form); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
@@ -362,7 +371,7 @@ func authGroup(router *gin.Engine) {
 		}
 
 		//Generating Token
-		tokens, err := auth.GenerateFullTokens(u.ID.String())
+		tokens, err := goaccount.GenerateFullTokens(u.ID.String())
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
@@ -373,7 +382,7 @@ func authGroup(router *gin.Engine) {
 
 	g.POST("/password/forget", func(c *gin.Context) {
 
-		form := new(auth.OTPSendForm)
+		form := new(OTPSendForm)
 		if err := c.ShouldBindJSON(form); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
@@ -417,7 +426,7 @@ func authGroup(router *gin.Engine) {
 
 	})
 
-	g.PUT("/password", auth.LoginRequired(), func(c *gin.Context) {
+	g.PUT("/password", LoginRequired(), func(c *gin.Context) {
 
 		ctx, _ := c.Get("ctx")
 		u, _ := c.Get("user")
@@ -426,7 +435,7 @@ func authGroup(router *gin.Engine) {
 		if user.PasswordExpired || user.Password == nil {
 
 			//Direct Password change
-			form := new(auth.DirectPasswordChangeForm)
+			form := new(DirectPasswordChangeForm)
 			if err := c.ShouldBindJSON(form); err != nil {
 				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 				return
@@ -436,19 +445,19 @@ func authGroup(router *gin.Engine) {
 		} else {
 
 			//Normal Password change
-			form := new(auth.NormalPasswordChangeForm)
+			form := new(NormalPasswordChangeForm)
 			if err := c.ShouldBindJSON(form); err != nil {
 				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 				return
 			}
-			if err := auth.CheckPasswordHash(form.CurrentPassword, *u.(*models.User).Password); err != nil {
+			if err := goaccount.CheckPasswordHash(form.CurrentPassword, *u.(*models.User).Password); err != nil {
 				c.JSON(http.StatusBadRequest, gin.H{"error": "email/password not match"})
 				return
 			}
 			password = form.Password
 		}
 
-		newPassword, err := auth.HashPassword(password)
+		newPassword, err := goaccount.HashPassword(password)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
@@ -466,7 +475,7 @@ func authGroup(router *gin.Engine) {
 
 	g.POST("/pre-register", func(c *gin.Context) {
 
-		form := new(auth.PreRegisterForm)
+		form := new(PreRegisterForm)
 		if err := c.ShouldBindJSON(form); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
@@ -495,50 +504,25 @@ func authGroup(router *gin.Engine) {
 		})
 
 	})
+}
 
-	g.POST("/socious", auth.SSOLoginRequired(), func(c *gin.Context) {
-		u, _ := c.Get("user")
-		ctx, _ := c.Get("ctx")
-		tokenClaims, _ := c.Get("token_claims")
+func GenerateUsername(email string) string {
+	var username string = email
+	var re *regexp.Regexp
 
-		//Castings
-		ssoClaims := tokenClaims.(auth.SSOClaims)
-		var user *models.User
-		isUserRegistered := false
+	re = regexp.MustCompile("@.*$")
+	username = re.ReplaceAllString(username, "")
 
-		//If user doesn't exist, it needs to be registered
-		if u == nil {
-			newUser := &models.User{
-				Email:     *ssoClaims.Email,
-				FirstName: ssoClaims.FirstName,
-				LastName:  ssoClaims.LastName,
-				Username:  auth.GenerateUsername(*ssoClaims.Email),
-			}
+	re = regexp.MustCompile("[^a-z0-9._-]")
+	username = re.ReplaceAllString(username, "-")
 
-			if err := newUser.Create(ctx.(context.Context)); err != nil {
-				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-				return
-			}
-			newUser.Status = "ACTIVE"
-			if err := newUser.Verify(ctx.(context.Context)); err != nil {
-				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-				return
-			}
+	re = regexp.MustCompile("[._-]{2,}")
+	username = re.ReplaceAllString(username, "-")
 
-			user = newUser
-			isUserRegistered = true
-		} else {
-			user = u.(*models.User)
-		}
+	username = strings.ToLower(username)
+	username = username[0:int(math.Min(float64(len(username)), 20))]
 
-		tokens, err := auth.GenerateFullTokens(user.ID.String())
-		tokens["registered"] = isUserRegistered
+	username = username + strconv.Itoa(int(1000+rand.Float64()*9000))
 
-		if err != nil {
-			c.JSON(http.StatusBadRequest, tokens)
-		}
-		c.JSON(http.StatusOK, tokens)
-
-	})
-
+	return username
 }

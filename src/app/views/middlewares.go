@@ -2,22 +2,139 @@ package views
 
 import (
 	"bytes"
-	"fmt"
 	"io"
 	"net/http"
-	"shin/src/app/auth"
+	"shin/src/app/models"
 	"shin/src/config"
 	"shin/src/lib"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/golang-jwt/jwt/v5"
+	"github.com/socious-io/goaccount"
 	database "github.com/socious-io/pkg_database"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
 )
 
+/*
+* Authorization
+ */
+func LoginRequired() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		tokenStr := c.GetHeader("Authorization")
+
+		claims, err := goaccount.ClaimsFromBearerToken(tokenStr)
+		if err != nil {
+			if err == jwt.ErrSignatureInvalid {
+				c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token signature"})
+				c.Abort()
+				return
+			}
+			c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+			c.Abort()
+			return
+		}
+
+		u, err := models.GetUser(uuid.MustParse(claims.ID))
+		if err != nil {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+			c.Abort()
+			return
+		}
+		c.Set("user", u)
+		c.Next()
+	}
+}
+func IntegrationRequired() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		tokenStr := c.GetHeader("apikey")
+		if tokenStr == "" {
+			tokenStr = c.Query("apikey")
+		}
+		if tokenStr == "" {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "apikey is required"})
+			c.Abort()
+			return
+		}
+		key, err := models.GetIntegrationBySecret(tokenStr)
+		if err != nil {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid apikey"})
+			c.Abort()
+			return
+		}
+		u, err := models.GetUser(key.UserID)
+		if err != nil {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+			c.Abort()
+			return
+		}
+		c.Set("user", u)
+		c.Next()
+	}
+}
+
+func AuthRequired() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		tokenStr := c.GetHeader("Authorization")
+		splited := strings.Split(tokenStr, " ")
+		if len(splited) > 1 {
+			tokenStr = splited[1]
+		} else {
+			tokenStr = splited[0]
+		}
+		if tokenStr != "" {
+			claims, err := goaccount.VerifyToken(tokenStr)
+			if err != nil {
+				if err == jwt.ErrSignatureInvalid {
+					c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid token signature"})
+					c.Abort()
+					return
+				}
+				c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+				c.Abort()
+				return
+			}
+			u, err := models.GetUser(uuid.MustParse(claims.ID))
+			if err != nil {
+				c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+				c.Abort()
+				return
+			}
+			c.Set("user", u)
+			c.Next()
+			return
+		}
+
+		tokenStr = c.GetHeader("apikey")
+		if tokenStr == "" {
+			tokenStr = c.Query("apikey")
+		}
+		if tokenStr == "" {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "apikey is required"})
+			c.Abort()
+			return
+		}
+		key, err := models.GetIntegrationBySecret(tokenStr)
+		if err != nil {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "invalid apikey"})
+			c.Abort()
+			return
+		}
+		u, err := models.GetUser(key.UserID)
+		if err != nil {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": err.Error()})
+			c.Abort()
+			return
+		}
+		c.Set("user", u)
+		c.Next()
+	}
+}
+
+// Pagination
 func paginate() gin.HandlerFunc {
 	return func(c *gin.Context) {
 
@@ -116,15 +233,16 @@ func AdminAccessRequired() gin.HandlerFunc {
 		}
 
 		c.Next()
-		return
 	}
 }
 
 func AccountCenterRequired() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		raw := fmt.Sprintf("%s:%s", config.Config.GoAccounts.ID, config.Config.GoAccounts.Secret)
-		hash, _ := auth.HashPassword(raw)
-		if hash != c.Request.Header.Get("x-account-center") {
+		id := c.Request.Header.Get("x-account-center-id")
+		secret := c.Request.Header.Get("x-account-center-secret")
+		hash, _ := goaccount.HashPassword(secret)
+
+		if id != config.Config.GoAccounts.ID || goaccount.CheckPasswordHash(secret, hash) != nil {
 			c.JSON(http.StatusForbidden, gin.H{"error": "Account center required"})
 			c.Abort()
 			return

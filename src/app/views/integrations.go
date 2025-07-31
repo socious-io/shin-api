@@ -3,7 +3,6 @@ package views
 import (
 	"context"
 	"net/http"
-	"shin/src/app/auth"
 	"shin/src/app/models"
 	"shin/src/config"
 	"shin/src/lib"
@@ -16,9 +15,9 @@ import (
 
 func integrationGroup(router *gin.Engine) {
 	g := router.Group("integrations")
-	g.Use(auth.LoginRequired())
+	g.Use(LoginRequired())
 
-	g.GET("/keys", paginate(), auth.LoginRequired(), func(c *gin.Context) {
+	g.GET("/keys", paginate(), LoginRequired(), func(c *gin.Context) {
 		u, _ := c.Get("user")
 		paginate, _ := c.Get("paginate")
 		limit, _ := c.Get("limit")

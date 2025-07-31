@@ -3,7 +3,6 @@ package views
 import (
 	"context"
 	"net/http"
-	"shin/src/app/auth"
 	"shin/src/app/models"
 	"shin/src/utils"
 
@@ -13,7 +12,7 @@ import (
 
 func orgGroup(router *gin.Engine) {
 	g := router.Group("organizations")
-	g.Use(auth.LoginRequired())
+	g.Use(LoginRequired())
 
 	g.GET("", func(c *gin.Context) {
 		u, _ := c.Get("user")
