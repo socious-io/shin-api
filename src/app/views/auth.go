@@ -151,13 +151,13 @@ func authGroup(router *gin.Engine) {
 			u.Username = GenerateUsername(u.Email)
 		}
 
-		ctx, _ := c.Get("ctx")
-		if err := u.Create(ctx.(context.Context)); err != nil {
+		ctx, _ := c.MustGet("ctx").(context.Context)
+		if err := u.Create(ctx); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
 
-		otp, err := models.NewOTP(ctx.(context.Context), u.ID, "AUTH")
+		otp, err := models.NewOTP(ctx, u.ID, "AUTH")
 
 		if err != nil {
 			c.JSON(http.StatusNotFound, gin.H{
@@ -197,8 +197,8 @@ func authGroup(router *gin.Engine) {
 		tb := models.TokenBlacklist{
 			Token: form.RefreshToken,
 		}
-		ctx, _ := c.Get("ctx")
-		if err := tb.Create(ctx.(context.Context)); err != nil {
+		ctx, _ := c.MustGet("ctx").(context.Context)
+		if err := tb.Create(ctx); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
@@ -228,11 +228,11 @@ func authGroup(router *gin.Engine) {
 			return
 		}
 
-		ctx, _ := c.Get("ctx")
+		ctx, _ := c.MustGet("ctx").(context.Context)
 
 		otp, err := models.GetOTPByUserID(u.ID)
 		if err != nil {
-			otp, err = models.NewOTP(ctx.(context.Context), u.ID, "AUTH")
+			otp, err = models.NewOTP(ctx, u.ID, "AUTH")
 			if err != nil {
 				c.JSON(http.StatusNotFound, gin.H{
 					"error":   err.Error(),
@@ -281,7 +281,7 @@ func authGroup(router *gin.Engine) {
 			return
 		}
 
-		ctx, _ := c.Get("ctx")
+		ctx, _ := c.MustGet("ctx").(context.Context)
 
 		otp, err := models.GetOTPByUserID(u.ID)
 		if err != nil {
@@ -300,7 +300,7 @@ func authGroup(router *gin.Engine) {
 			})
 			return
 		} else {
-			otp.UpdateSentAt(ctx.(context.Context))
+			otp.UpdateSentAt(ctx)
 		}
 
 		//Sending Email
@@ -334,13 +334,13 @@ func authGroup(router *gin.Engine) {
 		}
 
 		//Verifying OTP
-		ctx, _ := c.Get("ctx")
+		ctx, _ := c.MustGet("ctx").(context.Context)
 		otp := models.OTP{
 			UserID: u.ID,
 			Code:   form.Code,
 		}
 
-		err = otp.Verify(ctx.(context.Context))
+		err = otp.Verify(ctx)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"error":   err.Error(),
@@ -358,13 +358,13 @@ func authGroup(router *gin.Engine) {
 
 		//Verifying User
 		u.Status = "ACTIVE"
-		if err := u.Verify(ctx.(context.Context)); err != nil {
+		if err := u.Verify(ctx); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
 
 		if otp.Perpose == "FORGET_PASSWORD" {
-			if err := u.ExpirePassword(ctx.(context.Context)); err != nil {
+			if err := u.ExpirePassword(ctx); err != nil {
 				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 				return
 			}
@@ -398,8 +398,8 @@ func authGroup(router *gin.Engine) {
 		}
 
 		//Creating OTP
-		ctx, _ := c.Get("ctx")
-		otp, err := models.NewOTP(ctx.(context.Context), u.ID, "FORGET_PASSWORD")
+		ctx, _ := c.MustGet("ctx").(context.Context)
+		otp, err := models.NewOTP(ctx, u.ID, "FORGET_PASSWORD")
 		if err != nil {
 			c.JSON(http.StatusNotFound, gin.H{
 				"error":   err.Error(),
@@ -428,10 +428,10 @@ func authGroup(router *gin.Engine) {
 
 	g.PUT("/password", LoginRequired(), func(c *gin.Context) {
 
-		ctx, _ := c.Get("ctx")
-		u, _ := c.Get("user")
+		ctx, _ := c.MustGet("ctx").(context.Context)
+		user := c.MustGet("user").(*models.User)
 		var password string
-		user := u.(*models.User)
+
 		if user.PasswordExpired || user.Password == nil {
 
 			//Direct Password change
@@ -450,7 +450,7 @@ func authGroup(router *gin.Engine) {
 				c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 				return
 			}
-			if err := goaccount.CheckPasswordHash(form.CurrentPassword, *u.(*models.User).Password); err != nil {
+			if err := goaccount.CheckPasswordHash(form.CurrentPassword, *user.Password); err != nil {
 				c.JSON(http.StatusBadRequest, gin.H{"error": "email/password not match"})
 				return
 			}
@@ -464,7 +464,7 @@ func authGroup(router *gin.Engine) {
 		}
 
 		user.Password = &newPassword
-		if err := u.(*models.User).UpdatePassword(ctx.(context.Context)); err != nil {
+		if err := user.UpdatePassword(ctx); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}

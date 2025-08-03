@@ -20,9 +20,9 @@ func verificationsGroup(router *gin.Engine) {
 	g := router.Group("verifications")
 
 	g.GET("", paginate(), LoginRequired(), func(c *gin.Context) {
-		u, _ := c.Get("user")
-		page, _ := c.Get("paginate")
-		verifications, total, err := models.GetVerifications(u.(*models.User).ID, page.(database.Paginate))
+		u := c.MustGet("user").(*models.User)
+		page := c.MustGet("paginate").(database.Paginate)
+		verifications, total, err := models.GetVerifications(u.ID, page)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
@@ -34,10 +34,10 @@ func verificationsGroup(router *gin.Engine) {
 	})
 
 	g.GET("/:id/individuals", paginate(), LoginRequired(), func(c *gin.Context) {
-		u, _ := c.Get("user")
-		page, _ := c.Get("paginate")
+		u := c.MustGet("user").(*models.User)
+		page := c.MustGet("paginate").(database.Paginate)
 		id := c.Param("id")
-		verifications, total, err := models.GetVerificationsIndividuals(u.(*models.User).ID, uuid.MustParse(id), page.(database.Paginate))
+		verifications, total, err := models.GetVerificationsIndividuals(u.ID, uuid.MustParse(id), page)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
@@ -75,11 +75,11 @@ func verificationsGroup(router *gin.Engine) {
 			return
 		}
 		v := new(models.VerificationIndividual)
-		u, _ := c.Get("user")
-		v.UserID = u.(*models.User).ID
+		u := c.MustGet("user").(*models.User)
+		v.UserID = u.ID
 		v.VerificationID = form.VerificationID
-		ctx, _ := c.Get("ctx")
-		if err := v.Create(ctx.(context.Context), form.CustomerID); err != nil {
+		ctx, _ := c.MustGet("ctx").(context.Context)
+		if err := v.Create(ctx, form.CustomerID); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
@@ -99,11 +99,11 @@ func verificationsGroup(router *gin.Engine) {
 				return
 			}
 		}
-		ctx, _ := c.Get("ctx")
+		ctx, _ := c.MustGet("ctx").(context.Context)
 
 		callback, _ := url.JoinPath(config.Config.Host, strings.ReplaceAll(c.Request.URL.String(), "connect", "callback"))
 
-		if err := v.NewConnection(ctx.(context.Context), callback); err != nil {
+		if err := v.NewConnection(ctx, callback); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
@@ -118,8 +118,8 @@ func verificationsGroup(router *gin.Engine) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
-		ctx, _ := c.Get("ctx")
-		if err := v.ProofRequest(ctx.(context.Context)); err != nil {
+		ctx, _ := c.MustGet("ctx").(context.Context)
+		if err := v.ProofRequest(ctx); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
@@ -135,8 +135,8 @@ func verificationsGroup(router *gin.Engine) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
-		ctx, _ := c.Get("ctx")
-		v.ProofVerify(ctx.(context.Context))
+		ctx, _ := c.MustGet("ctx").(context.Context)
+		v.ProofVerify(ctx)
 		c.JSON(http.StatusOK, v)
 	})
 
@@ -148,10 +148,10 @@ func verificationsGroup(router *gin.Engine) {
 		}
 		v := new(models.Verification)
 		utils.Copy(form, v)
-		u, _ := c.Get("user")
-		v.UserID = u.(*models.User).ID
-		ctx, _ := c.Get("ctx")
-		if err := v.Create(ctx.(context.Context)); err != nil {
+		u := c.MustGet("user").(*models.User)
+		v.UserID = u.ID
+		ctx, _ := c.MustGet("ctx").(context.Context)
+		if err := v.Create(ctx); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
@@ -171,15 +171,15 @@ func verificationsGroup(router *gin.Engine) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
-		u, _ := c.Get("user")
-		if v.UserID.String() != u.(*models.User).ID.String() {
+		u := c.MustGet("user").(*models.User)
+		if v.UserID.String() != u.ID.String() {
 			c.JSON(http.StatusForbidden, gin.H{"error": "not allow"})
 			return
 		}
 		utils.Copy(form, v)
 
-		ctx, _ := c.Get("ctx")
-		if err := v.Update(ctx.(context.Context)); err != nil {
+		ctx, _ := c.MustGet("ctx").(context.Context)
+		if err := v.Update(ctx); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
@@ -193,13 +193,13 @@ func verificationsGroup(router *gin.Engine) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
-		u, _ := c.Get("user")
-		if v.UserID.String() != u.(*models.User).ID.String() {
+		u := c.MustGet("user").(*models.User)
+		if v.UserID.String() != u.ID.String() {
 			c.JSON(http.StatusForbidden, gin.H{"error": "not allow"})
 			return
 		}
-		ctx, _ := c.Get("ctx")
-		if err := v.Delete(ctx.(context.Context)); err != nil {
+		ctx, _ := c.MustGet("ctx").(context.Context)
+		if err := v.Delete(ctx); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}

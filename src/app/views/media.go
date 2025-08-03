@@ -40,16 +40,16 @@ func mediaGroup(router *gin.Engine) {
 
 		mediaUrl, fileName := lib.Upload(file, header.Filename)
 
-		u, _ := c.Get("user")
+		u := c.MustGet("user").(*models.User)
 
 		media := models.Media{
-			UserID:   u.(*models.User).ID,
+			UserID:   u.ID,
 			URL:      mediaUrl,
 			Filename: fileName,
 		}
 
-		ctx, _ := c.Get("ctx")
-		if err := media.Create(ctx.(context.Context)); err != nil {
+		ctx, _ := c.MustGet("ctx").(context.Context)
+		if err := media.Create(ctx); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error":   err.Error(),
 				"message": "Couldn't upload media",

@@ -3,4 +3,3 @@ SELECT o.*,
 FROM organizations o
 JOIN organization_members om ON user_id=$1 AND om.organization_id=o.id
 ORDER BY o.created_at ASC
-LIMIT 1

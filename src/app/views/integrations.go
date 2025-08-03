@@ -18,12 +18,12 @@ func integrationGroup(router *gin.Engine) {
 	g.Use(LoginRequired())
 
 	g.GET("/keys", paginate(), LoginRequired(), func(c *gin.Context) {
-		u, _ := c.Get("user")
-		paginate, _ := c.Get("paginate")
+		u := c.MustGet("user").(*models.User)
+		paginate, _ := c.MustGet("paginate").(database.Paginate)
 		limit, _ := c.Get("limit")
 		page, _ := c.Get("page")
 
-		integrationKeys, total, err := models.GetIntegrations(u.(*models.User).ID, paginate.(database.Paginate))
+		integrationKeys, total, err := models.GetIntegrations(u.ID, paginate)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
@@ -37,8 +37,8 @@ func integrationGroup(router *gin.Engine) {
 	})
 
 	g.POST("/keys", func(c *gin.Context) {
-		u, _ := c.Get("user")
-		ctx, _ := c.Get("ctx")
+		u := c.MustGet("user").(*models.User)
+		ctx, _ := c.MustGet("ctx").(context.Context)
 
 		form := new(models.IntegrationKey)
 		if err := c.ShouldBindJSON(form); err != nil {
@@ -47,14 +47,14 @@ func integrationGroup(router *gin.Engine) {
 		}
 
 		integrationKey := &models.IntegrationKey{
-			UserID:  u.(*models.User).ID,
+			UserID:  u.ID,
 			Name:    form.Name,
 			BaseUrl: config.Config.Host,
 			Key:     lib.GenerateApiKey(),
 			Secret:  lib.GenerateApiSecret(),
 		}
 
-		integrationKeyCreated, err := integrationKey.Create(ctx.(context.Context))
+		integrationKeyCreated, err := integrationKey.Create(ctx)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
@@ -64,7 +64,7 @@ func integrationGroup(router *gin.Engine) {
 	})
 
 	g.PUT("/keys/:id", func(c *gin.Context) {
-		ctx, _ := c.Get("ctx")
+		ctx, _ := c.MustGet("ctx").(context.Context)
 		id := c.Param("id")
 
 		integrationKey := new(models.IntegrationKey)
@@ -74,7 +74,7 @@ func integrationGroup(router *gin.Engine) {
 		}
 		integrationKey.ID = uuid.MustParse(id)
 
-		if err := integrationKey.Update(ctx.(context.Context)); err != nil {
+		if err := integrationKey.Update(ctx); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
@@ -83,16 +83,16 @@ func integrationGroup(router *gin.Engine) {
 	})
 
 	g.DELETE("/keys/:id", func(c *gin.Context) {
-		u, _ := c.Get("user")
-		ctx, _ := c.Get("ctx")
+		u := c.MustGet("user").(*models.User)
+		ctx, _ := c.MustGet("ctx").(context.Context)
 		id := c.Param("id")
 
 		integrationKey := &models.IntegrationKey{
 			ID:     uuid.MustParse(id),
-			UserID: u.(*models.User).ID,
+			UserID: u.ID,
 		}
 
-		if err := integrationKey.Delete(ctx.(context.Context)); err != nil {
+		if err := integrationKey.Delete(ctx); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}

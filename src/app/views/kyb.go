@@ -56,8 +56,8 @@ func kybVerificationGroup(router *gin.Engine) {
 
 	g.POST("/:org_id", LoginRequired(), func(c *gin.Context) {
 		orgID := c.Param("org_id")
-		u, _ := c.Get("user")
-		ctx, _ := c.Get("ctx")
+		u := c.MustGet("user").(*models.User)
+		ctx, _ := c.MustGet("ctx").(context.Context)
 
 		form := new(KYBVerificationForm)
 		if err := c.ShouldBindJSON(form); err != nil {
@@ -65,7 +65,7 @@ func kybVerificationGroup(router *gin.Engine) {
 			return
 		}
 
-		org, err := models.GetOrgByMember(uuid.MustParse(orgID), u.(*models.User).ID)
+		org, err := models.GetOrgByMember(uuid.MustParse(orgID), u.ID)
 		if err != nil {
 			c.JSON(http.StatusNotFound, gin.H{
 				"error":   err.Error(),
@@ -75,11 +75,11 @@ func kybVerificationGroup(router *gin.Engine) {
 		}
 
 		kyb := &models.KYBVerification{
-			UserID: u.(*models.User).ID,
+			UserID: u.ID,
 			OrgID:  org.ID,
 		}
 
-		kyb, err = kyb.Create(ctx.(context.Context), form.Documents)
+		kyb, err = kyb.Create(ctx, form.Documents)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
@@ -87,19 +87,19 @@ func kybVerificationGroup(router *gin.Engine) {
 
 		lib.DiscordSendTextMessage(
 			config.Config.Logger.Discord["shin_kyb_channel"],
-			createDiscordReviewMessage(kyb, u.(*models.User), org),
+			createDiscordReviewMessage(kyb, u, org),
 		)
 
 		c.JSON(http.StatusOK, kyb)
 	})
 
 	g.GET("/", LoginRequired(), paginate(), func(c *gin.Context) {
-		u, _ := c.Get("user")
-		paginate, _ := c.Get("paginate")
+		u := c.MustGet("user").(*models.User)
+		paginate, _ := c.MustGet("paginate").(database.Paginate)
 		limit, _ := c.Get("limit")
 		page, _ := c.Get("page")
 
-		kybVerifications, total, err := models.GetAllByUserId(u.(*models.User).ID, paginate.(database.Paginate))
+		kybVerifications, total, err := models.GetAllByUserId(u.ID, paginate)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
@@ -113,10 +113,10 @@ func kybVerificationGroup(router *gin.Engine) {
 	})
 
 	g.GET("/:id", LoginRequired(), func(c *gin.Context) {
-		u, _ := c.Get("user")
+		u := c.MustGet("user").(*models.User)
 		verificationId := c.Param("id")
 
-		verification, err := models.GetByIdAndUserId(uuid.MustParse(verificationId), u.(*models.User).ID)
+		verification, err := models.GetByIdAndUserId(uuid.MustParse(verificationId), u.ID)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
@@ -127,7 +127,7 @@ func kybVerificationGroup(router *gin.Engine) {
 
 	g.GET("/:id/approve", AdminAccessRequired(), func(c *gin.Context) {
 
-		ctx, _ := c.Get("ctx")
+		ctx, _ := c.MustGet("ctx").(context.Context)
 		verificationId := c.Param("id")
 
 		verification, err := models.GetById(uuid.MustParse(verificationId))
@@ -136,14 +136,14 @@ func kybVerificationGroup(router *gin.Engine) {
 			return
 		}
 
-		if err := verification.ChangeStatus(ctx.(context.Context), models.KYBStatusApproved); err != nil {
+		if err := verification.ChangeStatus(ctx, models.KYBStatusApproved); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
 
 		org, _ := models.GetOrg(verification.OrgID)
 
-		if err := org.UpdateVerification(ctx.(context.Context), true); err != nil {
+		if err := org.UpdateVerification(ctx, true); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
@@ -152,7 +152,7 @@ func kybVerificationGroup(router *gin.Engine) {
 	})
 
 	g.GET("/:id/reject", AdminAccessRequired(), func(c *gin.Context) {
-		ctx, _ := c.Get("ctx")
+		ctx, _ := c.MustGet("ctx").(context.Context)
 		verificationId := c.Param("id")
 
 		verification, err := models.GetById(uuid.MustParse(verificationId))
@@ -161,7 +161,7 @@ func kybVerificationGroup(router *gin.Engine) {
 			return
 		}
 
-		if err := verification.ChangeStatus(ctx.(context.Context), models.KYBStatusRejected); err != nil {
+		if err := verification.ChangeStatus(ctx, models.KYBStatusRejected); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}

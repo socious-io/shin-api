@@ -17,9 +17,9 @@ func schemasGroup(router *gin.Engine) {
 	g.Use(LoginRequired())
 
 	g.GET("", paginate(), func(c *gin.Context) {
-		u, _ := c.Get("user")
-		page, _ := c.Get("paginate")
-		schemas, total, err := models.GetSchemas(u.(*models.User).ID, page.(database.Paginate))
+		u := c.MustGet("user").(*models.User)
+		page := c.MustGet("paginate").(database.Paginate)
+		schemas, total, err := models.GetSchemas(u.ID, page)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		}
@@ -31,7 +31,7 @@ func schemasGroup(router *gin.Engine) {
 
 	g.GET("/:id", func(c *gin.Context) {
 		id := c.Param("id")
-		// u, _ := c.Get("user")
+		// u := c.MustGet("user").(*models.User)
 		s, err := models.GetSchema(uuid.MustParse(id))
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -47,10 +47,10 @@ func schemasGroup(router *gin.Engine) {
 		}
 		s := new(models.Schema)
 		utils.Copy(form, s)
-		u, _ := c.Get("user")
-		s.CreatedID = &u.(*models.User).ID
-		ctx, _ := c.Get("ctx")
-		if err := s.Create(ctx.(context.Context)); err != nil {
+		u := c.MustGet("user").(*models.User)
+		s.CreatedID = &u.ID
+		ctx, _ := c.MustGet("ctx").(context.Context)
+		if err := s.Create(ctx); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
@@ -59,19 +59,19 @@ func schemasGroup(router *gin.Engine) {
 
 	g.DELETE("/:id", func(c *gin.Context) {
 		id := c.Param("id")
-		u, _ := c.Get("user")
+		u := c.MustGet("user").(*models.User)
 		s, err := models.GetSchema(uuid.MustParse(id))
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
 
-		if s.Created.ID != u.(*models.User).ID || !s.Deleteable {
+		if s.Created.ID != u.ID || !s.Deleteable {
 			c.JSON(http.StatusForbidden, gin.H{"error": "not allow"})
 			return
 		}
-		ctx, _ := c.Get("ctx")
-		if err := s.Delete(ctx.(context.Context)); err != nil {
+		ctx, _ := c.MustGet("ctx").(context.Context)
+		if err := s.Delete(ctx); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}

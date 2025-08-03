@@ -17,9 +17,9 @@ func recipientsGroup(router *gin.Engine) {
 	g.Use(AuthRequired())
 
 	g.GET("", paginate(), func(c *gin.Context) {
-		u, _ := c.Get("user")
-		page, _ := c.Get("paginate")
-		recipients, total, err := models.SearchRecipients(c.Query("q"), u.(*models.User).ID, page.(database.Paginate))
+		u := c.MustGet("user").(*models.User)
+		page := c.MustGet("paginate").(database.Paginate)
+		recipients, total, err := models.SearchRecipients(c.Query("q"), u.ID, page)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
@@ -48,10 +48,10 @@ func recipientsGroup(router *gin.Engine) {
 		}
 		r := new(models.Recipient)
 		utils.Copy(form, r)
-		u, _ := c.Get("user")
-		r.UserID = u.(*models.User).ID
-		ctx, _ := c.Get("ctx")
-		if err := r.Create(ctx.(context.Context)); err != nil {
+		u := c.MustGet("user").(*models.User)
+		r.UserID = u.ID
+		ctx, _ := c.MustGet("ctx").(context.Context)
+		if err := r.Create(ctx); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
@@ -71,15 +71,15 @@ func recipientsGroup(router *gin.Engine) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
-		u, _ := c.Get("user")
-		if r.UserID.String() != u.(*models.User).ID.String() {
+		u := c.MustGet("user").(*models.User)
+		if r.UserID.String() != u.ID.String() {
 			c.JSON(http.StatusForbidden, gin.H{"error": "not allow"})
 			return
 		}
 		utils.Copy(form, r)
 
-		ctx, _ := c.Get("ctx")
-		if err := r.Update(ctx.(context.Context)); err != nil {
+		ctx, _ := c.MustGet("ctx").(context.Context)
+		if err := r.Update(ctx); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
@@ -93,13 +93,13 @@ func recipientsGroup(router *gin.Engine) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
-		u, _ := c.Get("user")
-		if r.UserID.String() != u.(*models.User).ID.String() {
+		u := c.MustGet("user").(*models.User)
+		if r.UserID.String() != u.ID.String() {
 			c.JSON(http.StatusForbidden, gin.H{"error": "not allow"})
 			return
 		}
-		ctx, _ := c.Get("ctx")
-		if err := r.Delete(ctx.(context.Context)); err != nil {
+		ctx, _ := c.MustGet("ctx").(context.Context)
+		if err := r.Delete(ctx); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}

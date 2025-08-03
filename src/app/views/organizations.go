@@ -15,9 +15,9 @@ func orgGroup(router *gin.Engine) {
 	g.Use(LoginRequired())
 
 	g.GET("", func(c *gin.Context) {
-		u, _ := c.Get("user")
+		u := c.MustGet("user").(*models.User)
 
-		orgs, err := models.GetOrgsByMember(u.(*models.User).ID)
+		orgs, err := models.GetOrgsByMember(u.ID)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
@@ -45,9 +45,9 @@ func orgGroup(router *gin.Engine) {
 		}
 		o := new(models.Organization)
 		utils.Copy(form, o)
-		u, _ := c.Get("user")
-		ctx, _ := c.Get("ctx")
-		if err := o.Create(ctx.(context.Context), u.(*models.User).ID); err != nil {
+		u := c.MustGet("user").(*models.User)
+		ctx, _ := c.MustGet("ctx").(context.Context)
+		if err := o.Create(ctx, u.ID); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
@@ -56,9 +56,9 @@ func orgGroup(router *gin.Engine) {
 
 	g.PUT("/:id", func(c *gin.Context) {
 		orgID := c.Param("id")
-		u, _ := c.Get("user")
+		u := c.MustGet("user").(*models.User)
 		// TODO: can be middleware
-		o, err := models.GetOrgByMember(uuid.MustParse(orgID), u.(*models.User).ID)
+		o, err := models.GetOrgByMember(uuid.MustParse(orgID), u.ID)
 		if err != nil {
 			c.JSON(http.StatusForbidden, gin.H{"error": err.Error()})
 			return
@@ -69,8 +69,8 @@ func orgGroup(router *gin.Engine) {
 			return
 		}
 		utils.Copy(form, o)
-		ctx, _ := c.Get("ctx")
-		if err := o.Update(ctx.(context.Context)); err != nil {
+		ctx, _ := c.MustGet("ctx").(context.Context)
+		if err := o.Update(ctx); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
