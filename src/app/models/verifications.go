@@ -395,6 +395,20 @@ func GetVerificationsIndividual(id uuid.UUID) (*VerificationIndividual, error) {
 	return v, nil
 }
 
+func GetVerificationsIndividualByCustomer(verificationID, recipientID uuid.UUID) (*VerificationIndividual, error) {
+	v := new(VerificationIndividual)
+
+	if err := database.Get(v, "verifications/get_individual_by_customer", verificationID, recipientID); err != nil {
+		return nil, err
+	}
+	verification, err := GetVerification(v.VerificationID)
+	if err != nil {
+		return nil, err
+	}
+	v.Verification = verification
+	return v, nil
+}
+
 func GetVerificationsIndividuals(userId, verificationId uuid.UUID, p database.Paginate) ([]VerificationIndividual, int, error) {
 	var (
 		verifications = []VerificationIndividual{}

@@ -1,0 +1,1 @@
+SELECT * from recipients WHERE user_id=$1 AND customer_id=$2

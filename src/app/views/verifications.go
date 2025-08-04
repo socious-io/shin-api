@@ -58,6 +58,28 @@ func verificationsGroup(router *gin.Engine) {
 		c.JSON(http.StatusOK, v)
 	})
 
+	g.GET("/:id/individuals/:customer", AuthRequired(), func(c *gin.Context) {
+		id := c.Param("id")
+		v, err := models.GetVerification(uuid.MustParse(id))
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		r, err := models.GetRecipientByCustomer(v.UserID, c.Param("customer"))
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+
+		vi, err := models.GetVerificationsIndividualByCustomer(v.ID, r.ID)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+
+		c.JSON(http.StatusOK, vi)
+	})
+
 	g.GET("/individuals/:id", LoginRequired(), func(c *gin.Context) {
 		id := c.Param("id")
 		v, err := models.GetVerificationsIndividual(uuid.MustParse(id))
@@ -68,7 +90,7 @@ func verificationsGroup(router *gin.Engine) {
 		c.JSON(http.StatusOK, v)
 	})
 
-	g.POST("individuals", AuthRequired(), func(c *gin.Context) {
+	g.POST("individuals",  func(c *gin.Context) {
 		form := new(VerificationIndividualForm)
 		if err := c.ShouldBindJSON(form); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})

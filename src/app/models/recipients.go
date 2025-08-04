@@ -81,6 +81,15 @@ func GetRecipient(id uuid.UUID) (*Recipient, error) {
 	return r, nil
 }
 
+func GetRecipientByCustomer(userID uuid.UUID, customerID string) (*Recipient, error) {
+	r := new(Recipient)
+
+	if err := database.Get(r, "recipients/get_by_customer", userID, customerID); err != nil {
+		return nil, err
+	}
+	return r, nil
+}
+
 func SearchRecipients(query string, userID uuid.UUID, p database.Paginate) ([]Recipient, int, error) {
 	var (
 		recipients = []Recipient{}

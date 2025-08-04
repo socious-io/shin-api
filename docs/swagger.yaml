@@ -275,6 +275,33 @@ paths:
           $ref: '#/components/responses/BadRequest'
         '401':
           $ref: '#/components/responses/Unauthorized'
+  /verifications/{id}/individuals/{customer}:
+    get:
+      tags:
+        - Verification Individuals
+      summary: Get a verification individual by customer
+      security:
+        - bearerAuth: []
+      parameters:
+        - $ref: '#/components/parameters/idPath'
+        - in: path
+          name: customer
+          required: true
+          schema:
+            type: string
+          description: Customer identifier
+      responses:
+        '200':
+          description: Verification individual details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerificationIndividual'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
 
   /verifications/{id}/connect:
     get:

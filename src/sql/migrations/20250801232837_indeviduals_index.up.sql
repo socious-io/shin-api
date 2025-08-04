@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX individual_recipient_verification ON credential_verification_individuals (verification_id, recipient_id);
