@@ -29,7 +29,6 @@ func verificationGroup() {
 			req.Header.Set("Authorization", authTokens[0])
 			router.ServeHTTP(w, req)
 			body := decodeBody(w.Body)
-			fmt.Println(body, "-----------------------------------------------------------_@@")
 			verificationsData[i]["id"] = body["id"]
 			Expect(w.Code).To(Equal(201))
 		}

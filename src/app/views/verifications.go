@@ -90,22 +90,27 @@ func verificationsGroup(router *gin.Engine) {
 		c.JSON(http.StatusOK, v)
 	})
 
-	g.POST("individuals",  func(c *gin.Context) {
+	g.POST("individuals", func(c *gin.Context) {
 		form := new(VerificationIndividualForm)
 		if err := c.ShouldBindJSON(form); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
-		v := new(models.VerificationIndividual)
-		u := c.MustGet("user").(*models.User)
-		v.UserID = u.ID
-		v.VerificationID = form.VerificationID
-		ctx, _ := c.MustGet("ctx").(context.Context)
-		if err := v.Create(ctx, form.CustomerID); err != nil {
+		v, err := models.GetVerification(form.VerificationID)
+		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
-		c.JSON(http.StatusCreated, v)
+
+		vi := new(models.VerificationIndividual)
+		vi.UserID = v.UserID
+		vi.VerificationID = form.VerificationID
+		ctx, _ := c.MustGet("ctx").(context.Context)
+		if err := vi.Create(ctx, form.CustomerID); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusCreated, vi)
 	})
 
 	g.GET("/:id/connect", func(c *gin.Context) {
