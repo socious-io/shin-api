@@ -196,20 +196,26 @@ func GetOrgByMember(id, userID uuid.UUID) (*Organization, error) {
 }
 
 func GetOrgsByMember(userID uuid.UUID) ([]Organization, error) {
-	var orgs []Organization
-	rows, err := database.Queryx("organizations/fetch_by_member", userID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
+	var (
+		orgs      = []Organization{}
+		fetchList []database.FetchList
+		ids       []interface{}
+	)
 
-	for rows.Next() {
-		o := new(Organization)
-		if err := o.Scan(rows); err != nil {
-			return nil, err
-		}
-		orgs = append(orgs, *o)
+	if err := database.QuerySelect("organizations/fetch_by_member", &fetchList, userID); err != nil {
+		return orgs, err
 	}
 
+	if len(fetchList) < 1 {
+		return orgs, nil
+	}
+
+	for _, f := range fetchList {
+		ids = append(ids, f.ID)
+	}
+
+	if err := database.Fetch(&orgs, ids...); err != nil {
+		return orgs, err
+	}
 	return orgs, nil
 }
