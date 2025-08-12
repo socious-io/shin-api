@@ -29,11 +29,21 @@ func authGroup(router *gin.Engine) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
-		session, authURL, err := goaccount.StartSession(form.RedirectURL, goaccount.AuthModeLogin)
+
+		sessionPolicies := []goaccount.PolicyType{
+			goaccount.PolicyTypePreventUserAccountSelection,
+			goaccount.PolicyTypeRequireAtleastOneOrg,
+		}
+		session, authURL, err := goaccount.StartSession(
+			form.RedirectURL,
+			goaccount.AuthModeLogin,
+			sessionPolicies,
+		)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
+
 		c.JSON(http.StatusAccepted, gin.H{
 			"session":  session,
 			"auth_url": authURL,

@@ -22,7 +22,7 @@ require (
 	github.com/onsi/gomega v1.34.1
 	github.com/sendgrid/sendgrid-go v3.15.0+incompatible
 	github.com/sirupsen/logrus v1.9.3
-	github.com/socious-io/goaccount v0.1.97
+	github.com/socious-io/goaccount v0.1.98
 	github.com/socious-io/pkg_database v1.0.0
 	github.com/spf13/viper v1.19.0
 	google.golang.org/api v0.214.0
