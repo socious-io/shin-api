@@ -43,14 +43,14 @@ Example request:
 
 ```
 curl --location 'https://api.shinid.com/verifications/{verification_id}/individuals/{customer_unique_username}'
---header 'apikey: YOUR_API_KEY'
+--header 'apikey: YOUR_API_KEY_SECRET'
 ```
 
 
 Replace:
 - `{verification_id}` with the verification ID  
 - `{customer_unique_username}` with the unique username you provided (if any)  
-- `YOUR_API_KEY` with your ShinID API key  
+- `YOUR_API_KEY` with your ShinID SECRET API key  
 
 Response for this API would be something like this:
 ```
