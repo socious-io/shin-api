@@ -56,8 +56,8 @@ type SessionForm struct {
 }
 
 type SyncForm struct {
-	Organizations []models.Organization `json:"organization"`
-	User          models.User           `json:"users" validate:"required"`
+	Organizations []models.Organization `json:"organizations"`
+	User          models.User           `json:"user" validate:"required"`
 }
 
 // Others

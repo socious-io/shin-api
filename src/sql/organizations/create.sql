@@ -6,5 +6,5 @@ DO UPDATE SET
     name = EXCLUDED.name,
     description = EXCLUDED.description,
     logo=EXCLUDED.logo,
-    verified=EXCLUDED.verified
+    verified=CASE WHEN EXCLUDED.verified THEN EXCLUDED.verified ELSE organizations.verified END
 RETURNING *;

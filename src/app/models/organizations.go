@@ -134,9 +134,15 @@ func (o *Organization) NewDID(ctx context.Context) error {
 }
 
 func (o *Organization) Update(ctx context.Context) error {
+
+	if o.Logo != nil {
+		b, _ := json.Marshal(o.Logo)
+		o.LogoJson.Scan(b)
+	}
+
 	rows, err := database.Query(
 		ctx, "organizations/update",
-		o.ID, o.Name, o.Description, o.Logo,
+		o.ID, o.Name, o.Description, o.LogoJson,
 	)
 	if err != nil {
 		return err
