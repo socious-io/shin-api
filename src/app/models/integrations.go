@@ -2,7 +2,6 @@ package models
 
 import (
 	"context"
-	"fmt"
 	"time"
 
 	database "github.com/socious-io/pkg_database"
@@ -84,7 +83,6 @@ func (ik *IntegrationKey) Delete(ctx context.Context) error {
 func GetIntegrationBySecret(secret string) (*IntegrationKey, error) {
 	k := new(IntegrationKey)
 	if err := database.Get(k, "integrations/fetch_by_secret", secret); err != nil {
-		fmt.Println(err, "******************")
 		return nil, err
 	}
 	return k, nil
