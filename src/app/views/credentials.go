@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"shin/src/app/auth"
 	"shin/src/app/models"
 	"shin/src/config"
 	"shin/src/lib"
@@ -25,10 +24,11 @@ import (
 func credentialsGroup(router *gin.Engine) {
 	g := router.Group("credentials")
 
-	g.GET("", paginate(), auth.LoginRequired(), func(c *gin.Context) {
-		u, _ := c.Get("user")
-		page, _ := c.Get("paginate")
-		credentials, total, err := models.GetCredentials(u.(*models.User).ID, page.(database.Paginate))
+	g.GET("", paginate(), LoginRequired(), func(c *gin.Context) {
+		u := c.MustGet("user").(*models.User)
+		page := c.MustGet("paginate").(database.Paginate)
+
+		credentials, total, err := models.GetCredentials(u.ID, page)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
@@ -39,7 +39,7 @@ func credentialsGroup(router *gin.Engine) {
 		})
 	})
 
-	g.GET("/:id", auth.LoginRequired(), func(c *gin.Context) {
+	g.GET("/:id", LoginRequired(), func(c *gin.Context) {
 		id := c.Param("id")
 		v, err := models.GetCredential(uuid.MustParse(id))
 		if err != nil {
@@ -62,11 +62,11 @@ func credentialsGroup(router *gin.Engine) {
 				return
 			}
 		}
-		ctx, _ := c.Get("ctx")
+		ctx, _ := c.MustGet("ctx").(context.Context)
 
 		callback, _ := url.JoinPath(config.Config.Host, strings.ReplaceAll(c.Request.URL.String(), "connect", "callback"))
 
-		if err := cv.NewConnection(ctx.(context.Context), callback); err != nil {
+		if err := cv.NewConnection(ctx, callback); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
@@ -81,8 +81,8 @@ func credentialsGroup(router *gin.Engine) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
-		ctx, _ := c.Get("ctx")
-		if err := cv.Issue(ctx.(context.Context)); err != nil {
+		ctx, _ := c.MustGet("ctx").(context.Context)
+		if err := cv.Issue(ctx); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
@@ -91,9 +91,9 @@ func credentialsGroup(router *gin.Engine) {
 		})
 	})
 
-	g.PATCH("/revoke", auth.LoginRequired(), func(c *gin.Context) {
+	g.PATCH("/revoke", LoginRequired(), func(c *gin.Context) {
 
-		u, _ := c.Get("user")
+		u := c.MustGet("user").(*models.User)
 
 		form := new(CredentialBulkOperationForm)
 		if err := c.ShouldBindJSON(form); err != nil {
@@ -113,7 +113,7 @@ func credentialsGroup(router *gin.Engine) {
 
 		//Validate credential(s) ownerships
 		for _, credential := range credentials {
-			if credential.CreatedID.String() != u.(*models.User).ID.String() {
+			if credential.CreatedID.String() != u.ID.String() {
 				c.JSON(http.StatusForbidden, gin.H{"error": "not allow"})
 				return
 			}
@@ -131,20 +131,20 @@ func credentialsGroup(router *gin.Engine) {
 			"message": "success",
 		})
 	})
-	g.PATCH("/:id/revoke", auth.LoginRequired(), func(c *gin.Context) {
+	g.PATCH("/:id/revoke", LoginRequired(), func(c *gin.Context) {
 		id := c.Param("id")
 		cv, err := models.GetCredential(uuid.MustParse(id))
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
-		u, _ := c.Get("user")
-		if cv.CreatedID.String() != u.(*models.User).ID.String() {
+		u := c.MustGet("user").(*models.User)
+		if cv.CreatedID.String() != u.ID.String() {
 			c.JSON(http.StatusForbidden, gin.H{"error": "not allow"})
 			return
 		}
-		ctx, _ := c.Get("ctx")
-		if err := cv.Revoke(ctx.(context.Context)); err != nil {
+		ctx, _ := c.MustGet("ctx").(context.Context)
+		if err := cv.Revoke(ctx); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
@@ -153,7 +153,7 @@ func credentialsGroup(router *gin.Engine) {
 		})
 	})
 
-	g.POST("", auth.LoginRequired(), func(c *gin.Context) {
+	g.POST("", LoginRequired(), func(c *gin.Context) {
 		form := new(CredentialForm)
 		if err := c.ShouldBindJSON(form); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -169,9 +169,9 @@ func credentialsGroup(router *gin.Engine) {
 			return
 		}
 		cv := new(models.Credential)
-		u, _ := c.Get("user")
-		cv.CreatedID = u.(*models.User).ID
-		ctx, _ := c.Get("ctx")
+		u := c.MustGet("user").(*models.User)
+		cv.CreatedID = u.ID
+		ctx, _ := c.MustGet("ctx").(context.Context)
 		orgs, err := models.GetOrgsByMember(cv.CreatedID)
 		if err != nil || len(orgs) < 1 {
 			c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("fetching org error :%v", err)})
@@ -187,7 +187,7 @@ func credentialsGroup(router *gin.Engine) {
 		claims["issued_date"] = time.Now().Format(time.RFC3339)
 		claims["company_name"] = orgs[0].Name
 		cv.Claims, _ = json.Marshal(&claims)
-		if err := cv.Create(ctx.(context.Context)); err != nil {
+		if err := cv.Create(ctx); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
@@ -212,10 +212,10 @@ func credentialsGroup(router *gin.Engine) {
 		c.JSON(http.StatusCreated, cv)
 	})
 
-	g.POST("/with-recipient", auth.LoginRequired(), func(c *gin.Context) {
+	g.POST("/with-recipient", LoginRequired(), func(c *gin.Context) {
 
-		u, _ := c.Get("user")
-		ctx, _ := c.Get("ctx")
+		u := c.MustGet("user").(*models.User)
+		ctx, _ := c.MustGet("ctx").(context.Context)
 
 		form := new(CredentialRecipientForm)
 		if err := c.ShouldBindJSON(form); err != nil {
@@ -226,8 +226,8 @@ func credentialsGroup(router *gin.Engine) {
 		//Creating Recipient
 		r := new(models.Recipient)
 		utils.Copy(form.Recipient, r)
-		r.UserID = u.(*models.User).ID
-		if err := r.Create(ctx.(context.Context)); err != nil {
+		r.UserID = u.ID
+		if err := r.Create(ctx); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
@@ -243,7 +243,7 @@ func credentialsGroup(router *gin.Engine) {
 			return
 		}
 		cv := new(models.Credential)
-		cv.CreatedID = u.(*models.User).ID
+		cv.CreatedID = u.ID
 		orgs, err := models.GetOrgsByMember(cv.CreatedID)
 		if err != nil || len(orgs) < 1 {
 			c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("fetching org error :%v", err)})
@@ -260,21 +260,20 @@ func credentialsGroup(router *gin.Engine) {
 		claims["issued_date"] = time.Now().Format(time.RFC3339)
 		claims["company_name"] = orgs[0].Name
 		cv.Claims, _ = json.Marshal(&claims)
-		if err := cv.Create(ctx.(context.Context)); err != nil {
+		if err := cv.Create(ctx); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
 		c.JSON(http.StatusCreated, cv)
 	})
 
-	g.POST("/import", auth.LoginRequired(), func(c *gin.Context) {
+	g.POST("/import", LoginRequired(), func(c *gin.Context) {
 
-		ctx, _ := c.Get("ctx")
-		u, _ := c.Get("user")
-		user := u.(*models.User)
+		ctx, _ := c.MustGet("ctx").(context.Context)
+		user := c.MustGet("user").(*models.User)
 
 		//Check for any ongoing imports
-		i, err := models.GetActiveImportByUserId(user.ID)
+		i, _ := models.GetActiveImportByUserId(user.ID)
 		if i != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "You have an existing incomplete import"})
 			return
@@ -324,7 +323,7 @@ func credentialsGroup(router *gin.Engine) {
 					UserID:     user.ID,
 					TotalCount: len(results),
 				}
-				if err := i.Create(ctx.(context.Context)); err != nil {
+				if err := i.Create(ctx); err != nil {
 					c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 					return
 				}
@@ -343,7 +342,7 @@ func credentialsGroup(router *gin.Engine) {
 
 	})
 
-	g.GET("/import/:id", auth.LoginRequired(), func(c *gin.Context) {
+	g.GET("/import/:id", LoginRequired(), func(c *gin.Context) {
 		id := c.Param("id")
 
 		i, err := models.GetImport(uuid.MustParse(id))
@@ -381,25 +380,18 @@ func credentialsGroup(router *gin.Engine) {
 			switch attribute_type {
 			case string(models.Text):
 				sample_value = "some text"
-				break
 			case string(models.Number):
 				sample_value = "1234"
-				break
 			case string(models.Boolean):
 				sample_value = "true"
-				break
 			case string(models.Email):
 				sample_value = "example@email.com"
-				break
 			case string(models.Url):
 				sample_value = "http://some.url.example"
-				break
 			case string(models.Datetime):
 				sample_value = string(time.Now().Format(time.RFC3339))
-				break
 			default:
 				sample_value = "UNKNOWN_DATATYPE"
-				break
 			}
 
 			schemaAttributes = append(schemaAttributes, attribute)
@@ -424,7 +416,7 @@ func credentialsGroup(router *gin.Engine) {
 
 	})
 
-	g.POST("/notify", auth.LoginRequired(), func(c *gin.Context) {
+	g.POST("/notify", LoginRequired(), func(c *gin.Context) {
 		form := new(CredentialBulkEmailForm)
 		if err := c.ShouldBindJSON(form); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -462,10 +454,10 @@ func credentialsGroup(router *gin.Engine) {
 		})
 	})
 
-	g.POST("/notify/via-schema", auth.LoginRequired(), func(c *gin.Context) {
+	g.POST("/notify/via-schema", LoginRequired(), func(c *gin.Context) {
 
-		ctx, _ := c.Get("ctx")
-		u, _ := c.Get("user")
+		ctx, _ := c.MustGet("ctx").(context.Context)
+		u := c.MustGet("user").(*models.User)
 
 		form := new(CredentialBySchemaEmailForm)
 		if err := c.ShouldBindJSON(form); err != nil {
@@ -475,7 +467,7 @@ func credentialsGroup(router *gin.Engine) {
 
 		doneChan, errChan := make(chan bool), make(chan error)
 
-		go services.CredentialBulkEmailAsync(ctx.(context.Context), u.(*models.User).ID, form.SchemaID.String(), form.Message, doneChan, errChan)
+		go services.CredentialBulkEmailAsync(ctx, u.ID, form.SchemaID.String(), form.Message, doneChan, errChan)
 		for {
 			select {
 			case <-doneChan:
@@ -492,7 +484,7 @@ func credentialsGroup(router *gin.Engine) {
 
 	})
 
-	g.PUT("/:id", auth.LoginRequired(), func(c *gin.Context) {
+	g.PUT("/:id", LoginRequired(), func(c *gin.Context) {
 		form := new(CredentialForm)
 		if err := c.ShouldBindJSON(form); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -504,8 +496,8 @@ func credentialsGroup(router *gin.Engine) {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
-		u, _ := c.Get("user")
-		if cv.CreatedID.String() != u.(*models.User).ID.String() {
+		u := c.MustGet("user").(*models.User)
+		if cv.CreatedID.String() != u.ID.String() {
 			c.JSON(http.StatusForbidden, gin.H{"error": "not allow"})
 			return
 		}
@@ -516,28 +508,28 @@ func credentialsGroup(router *gin.Engine) {
 		}
 		utils.Copy(form, cv)
 
-		ctx, _ := c.Get("ctx")
-		if err := cv.Update(ctx.(context.Context)); err != nil {
+		ctx, _ := c.MustGet("ctx").(context.Context)
+		if err := cv.Update(ctx); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
 		c.JSON(http.StatusAccepted, cv)
 	})
 
-	g.DELETE("/:id", auth.LoginRequired(), func(c *gin.Context) {
+	g.DELETE("/:id", LoginRequired(), func(c *gin.Context) {
 		id := c.Param("id")
 		cv, err := models.GetCredential(uuid.MustParse(id))
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
-		u, _ := c.Get("user")
-		if cv.CreatedID.String() != u.(*models.User).ID.String() {
+		u := c.MustGet("user").(*models.User)
+		if cv.CreatedID.String() != u.ID.String() {
 			c.JSON(http.StatusForbidden, gin.H{"error": "not allow"})
 			return
 		}
-		ctx, _ := c.Get("ctx")
-		if err := cv.Delete(ctx.(context.Context)); err != nil {
+		ctx, _ := c.MustGet("ctx").(context.Context)
+		if err := cv.Delete(ctx); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
@@ -546,9 +538,9 @@ func credentialsGroup(router *gin.Engine) {
 		})
 	})
 
-	g.POST("/delete", auth.LoginRequired(), func(c *gin.Context) {
-		ctx, _ := c.Get("ctx")
-		u, _ := c.Get("user")
+	g.POST("/delete", LoginRequired(), func(c *gin.Context) {
+		ctx, _ := c.MustGet("ctx").(context.Context)
+		u := c.MustGet("user").(*models.User)
 
 		form := new(CredentialBulkOperationForm)
 		if err := c.ShouldBindJSON(form); err != nil {
@@ -556,7 +548,7 @@ func credentialsGroup(router *gin.Engine) {
 			return
 		}
 
-		if err := models.CredentialsBulkDelete(ctx.(context.Context), form.Credentials, u.(*models.User).ID); err != nil {
+		if err := models.CredentialsBulkDelete(ctx, form.Credentials, u.ID); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}

@@ -3,6 +3,7 @@ package config
 import (
 	"log"
 
+	"github.com/socious-io/goaccount"
 	"github.com/spf13/viper"
 )
 
@@ -61,6 +62,7 @@ type ConfigType struct {
 	Admin struct {
 		AccessToken string `mapstructure:"access_token"`
 	} `mapstructure:"admin"`
+	GoAccounts goaccount.Config `mapstructure:"goaccounts"`
 }
 
 func Init(configPath string) {

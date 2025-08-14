@@ -91,7 +91,7 @@ func importCredentials(record map[string]any, meta map[string]any, i models.Impo
 		UserID:    u.ID,
 	}
 	r.UserID = u.ID
-	if err := r.Create(ctx.(context.Context)); err != nil {
+	if err := r.Create(ctx); err != nil {
 		return err
 	}
 	delete(record, "recipient_first_name")
@@ -123,7 +123,7 @@ func importCredentials(record map[string]any, meta map[string]any, i models.Impo
 	claims["company_name"] = orgs[0].Name
 	cv.Claims, _ = json.Marshal(&claims)
 
-	if err := cv.Create(ctx.(context.Context)); err != nil {
+	if err := cv.Create(ctx); err != nil {
 		return err
 	}
 

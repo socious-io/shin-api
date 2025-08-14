@@ -49,7 +49,7 @@ func credentialRevoke(entity interface{}) {
 	credential := new(models.Credential)
 	utils.Copy(entity, credential)
 
-	if err := credential.Revoke(ctx.(context.Context)); err != nil {
+	if err := credential.Revoke(ctx); err != nil {
 		fmt.Println("Couldn't Revoke Credential, Error: ", err.Error())
 		return
 	}

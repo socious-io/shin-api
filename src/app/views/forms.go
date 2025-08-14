@@ -4,12 +4,67 @@ import (
 	"shin/src/app/models"
 
 	"github.com/google/uuid"
+	"github.com/jmoiron/sqlx/types"
 )
 
+// Authentication
+type RegisterForm struct {
+	FirstName *string `json:"first_name"`
+	LastName  *string `json:"last_name"`
+	Username  *string `json:"username"`
+	Email     string  `json:"email" validate:"required,email"`
+	Password  *string `json:"password"`
+}
+
+type LoginForm struct {
+	Email    string `json:"email" validate:"required,email"`
+	Password string `json:"password" validate:"required,min=8"`
+}
+
+type OTPSendForm struct {
+	Email string `json:"email" validate:"required,email"`
+}
+type OTPConfirmForm struct {
+	Email string `json:"email" validate:"required,email"`
+	Code  int    `json:"code" validate:"required"`
+}
+
+type RefreshTokenForm struct {
+	RefreshToken string `json:"refresh_token" validate:"required"`
+}
+
+type PreRegisterForm struct {
+	Email    *string `json:"email" validate:"email"`
+	Username *string `json:"username"`
+}
+
+type NormalPasswordChangeForm struct {
+	CurrentPassword string `json:"current_password" validate:"required"`
+	Password        string `json:"password" validate:"required"`
+}
+
+type DirectPasswordChangeForm struct {
+	Password string `json:"password" validate:"required"`
+}
+
+type AuthForm struct {
+	RedirectURL string `json:"redirect_url" validate:"required"`
+}
+
+type SessionForm struct {
+	Code string `json:"code" validate:"required"`
+}
+
+type SyncForm struct {
+	Organizations []models.Organization `json:"organizations"`
+	User          models.User           `json:"user" validate:"required"`
+}
+
+// Others
 type OrganizationForm struct {
-	Name        string     `json:"name" validate:"required,min=3,max=32"`
-	Description string     `json:"description" validate:"required,min=3"`
-	LogoID      *uuid.UUID `json:"logo_id"`
+	Name        string          `json:"name" validate:"required,min=3,max=32"`
+	Description string          `json:"description" validate:"required,min=3"`
+	Logo        *types.JSONText `json:"logo"`
 }
 
 type SchemaForm struct {
@@ -79,13 +134,13 @@ type CredentialRecipientForm struct {
 }
 
 type ProfileUpdateForm struct {
-	Username  *string    `json:"username" validate:"required,min=3,max=32"`
-	JobTitle  *string    `json:"job_title"`
-	Bio       *string    `json:"bio"`
-	FirstName string     `json:"first_name" validate:"required,min=3,max=32"`
-	LastName  string     `json:"last_name" validate:"required,min=3,max=32"`
-	Phone     *string    `json:"phone"`
-	AvatarID  *uuid.UUID `json:"avatar_id"`
+	Username  *string         `json:"username" validate:"required,min=3,max=32"`
+	JobTitle  *string         `json:"job_title"`
+	Bio       *string         `json:"bio"`
+	FirstName string          `json:"first_name" validate:"required,min=3,max=32"`
+	LastName  string          `json:"last_name" validate:"required,min=3,max=32"`
+	Phone     *string         `json:"phone"`
+	Avatar    *types.JSONText `json:"avatar"`
 }
 
 type KYBVerificationForm struct {

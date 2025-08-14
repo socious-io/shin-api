@@ -13,6 +13,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/socious-io/goaccount"
 	database "github.com/socious-io/pkg_database"
 
 	"github.com/gin-gonic/gin"
@@ -114,6 +115,11 @@ func setupTestEnvironment() (*sqlx.DB, *gin.Engine) {
 		log.Fatal(err)
 	}
 	log.Println("Migrations applied successfully!")
+
+	if err := goaccount.Setup(config.Config.GoAccounts); err != nil {
+		log.Fatalf("goaccount error %v", err)
+	}
+
 	router := app.Init()
 
 	return db, router

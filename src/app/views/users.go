@@ -3,7 +3,6 @@ package views
 import (
 	"context"
 	"net/http"
-	"shin/src/app/auth"
 	"shin/src/app/models"
 	"shin/src/utils"
 
@@ -12,10 +11,10 @@ import (
 
 func userGroup(router *gin.Engine) {
 	g := router.Group("users")
-	g.Use(auth.LoginRequired())
+	g.Use(LoginRequired())
 
 	g.GET("", func(c *gin.Context) {
-		u, _ := c.Get("user")
+		u := c.MustGet("user").(*models.User)
 		c.JSON(http.StatusOK, u)
 	})
 
@@ -26,16 +25,16 @@ func userGroup(router *gin.Engine) {
 			return
 		}
 
-		u, _ := c.Get("user")
-		ctx, _ := c.Get("ctx")
-		user := u.(*models.User)
+		user := c.MustGet("user").(*models.User)
+		ctx, _ := c.MustGet("ctx").(context.Context)
 		utils.Copy(form, user)
 
-		if err := user.UpdateProfile(ctx.(context.Context)); err != nil {
+		if err := user.UpdateProfile(ctx); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 			return
 		}
 
-		c.JSON(http.StatusAccepted, u)
+		c.JSON(http.StatusAccepted, user)
 	})
+
 }

@@ -2,6 +2,8 @@ package models
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"log"
 	"shin/src/wallet"
 	"time"
@@ -10,19 +12,17 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
+	"github.com/jmoiron/sqlx/types"
 )
 
 type Organization struct {
-	ID          uuid.UUID  `db:"id" json:"id"`
-	DID         *string    `db:"did" json:"did"`
-	Name        string     `db:"name" json:"name"`
-	Description string     `db:"description" json:"description"`
-	LogoID      *uuid.UUID `db:"logo_id" json:"logo_id"`
-	Logo        struct {
-		Url      *string `db:"url" json:"url"`
-		Filename *string `db:"filename" json:"filename"`
-	} `db:"logo" json:"logo"`
-	IsVerified         bool                       `db:"is_verified" json:"is_verified"`
+	ID                 uuid.UUID                  `db:"id" json:"id"`
+	DID                *string                    `db:"did" json:"did"`
+	Name               string                     `db:"name" json:"name"`
+	Description        string                     `db:"description" json:"description"`
+	Logo               *Media                     `db:"-" json:"logo"`
+	LogoJson           types.JSONText             `db:"logo" json:"-"`
+	Verified           bool                       `db:"verified" json:"verified"`
 	VerificationStatus *KybVerificationStatusType `db:"verification_status" json:"verification_status"`
 	UpdatedAt          time.Time                  `db:"updated_at" json:"updated_at"`
 	CreatedAt          time.Time                  `db:"created_at" json:"created_at"`
@@ -53,12 +53,42 @@ func (o *Organization) Create(ctx context.Context, userID uuid.UUID) error {
 	if err != nil {
 		return err
 	}
-	rows, err := database.TxQuery(ctx, tx, "organizations/create",
-		o.Name, o.Description, o.LogoID,
+
+	if o.Logo != nil {
+		b, _ := json.Marshal(o.Logo)
+		o.LogoJson.Scan(b)
+	}
+
+	if o.ID == uuid.Nil {
+		newID, err := uuid.NewUUID()
+		if err != nil {
+			return err
+		}
+		o.ID = newID
+	}
+
+	rows, err := database.TxQuery(
+		ctx,
+		tx,
+		"organizations/create",
+		o.ID,
+		o.Name,
+		o.Description,
+		o.LogoJson,
+		o.Verified,
 	)
 	if err != nil {
 		tx.Rollback()
+		fmt.Println(err)
 		return err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		if err := rows.StructScan(o); err != nil {
+			tx.Rollback()
+			return err
+		}
 	}
 
 	for rows.Next() {
@@ -68,6 +98,7 @@ func (o *Organization) Create(ctx context.Context, userID uuid.UUID) error {
 		}
 	}
 	rows.Close()
+
 	// Creating default member
 	rows, err = database.TxQuery(ctx, tx, "organizations/add_member",
 		userID, o.ID,
@@ -77,6 +108,7 @@ func (o *Organization) Create(ctx context.Context, userID uuid.UUID) error {
 		return err
 	}
 	rows.Close()
+
 	return tx.Commit()
 }
 
@@ -102,9 +134,15 @@ func (o *Organization) NewDID(ctx context.Context) error {
 }
 
 func (o *Organization) Update(ctx context.Context) error {
+
+	if o.Logo != nil {
+		b, _ := json.Marshal(o.Logo)
+		o.LogoJson.Scan(b)
+	}
+
 	rows, err := database.Query(
 		ctx, "organizations/update",
-		o.ID, o.Name, o.Description, o.LogoID,
+		o.ID, o.Name, o.Description, o.LogoJson,
 	)
 	if err != nil {
 		return err
@@ -164,20 +202,26 @@ func GetOrgByMember(id, userID uuid.UUID) (*Organization, error) {
 }
 
 func GetOrgsByMember(userID uuid.UUID) ([]Organization, error) {
-	var orgs []Organization
-	rows, err := database.Queryx("organizations/fetch_by_member", userID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
+	var (
+		orgs      = []Organization{}
+		fetchList []database.FetchList
+		ids       []interface{}
+	)
 
-	for rows.Next() {
-		o := new(Organization)
-		if err := o.Scan(rows); err != nil {
-			return nil, err
-		}
-		orgs = append(orgs, *o)
+	if err := database.QuerySelect("organizations/fetch_by_member", &fetchList, userID); err != nil {
+		return orgs, err
 	}
 
+	if len(fetchList) < 1 {
+		return orgs, nil
+	}
+
+	for _, f := range fetchList {
+		ids = append(ids, f.ID)
+	}
+
+	if err := database.Fetch(&orgs, ids...); err != nil {
+		return orgs, err
+	}
 	return orgs, nil
 }

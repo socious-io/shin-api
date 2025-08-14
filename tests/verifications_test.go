@@ -69,11 +69,21 @@ func verificationGroup() {
 				"verification_id": data["id"],
 			})
 			req, _ := http.NewRequest("POST", "/verifications/individuals", bytes.NewBuffer(reqBody))
-			req.Header.Set("apikey", intKey)
+			// req.Header.Set("apikey", intKey)
 			router.ServeHTTP(w, req)
 			body := decodeBody(w.Body)
 			verificationsData[i]["individual"] = body["id"]
 			Expect(w.Code).To(Equal(201))
+		}
+	})
+
+	It("it should get verification individual by customer", func() {
+		for i, data := range verificationsData {
+			w := httptest.NewRecorder()
+			req, _ := http.NewRequest("GET", fmt.Sprintf("/verifications/%s/individuals/customer_%d", data["id"], i), nil)
+			req.Header.Set("apikey", intKey)
+			router.ServeHTTP(w, req)
+			Expect(w.Code).To(Equal(200))
 		}
 	})
 

@@ -1,12 +1,14 @@
 package main
 
 import (
+	"log"
 	"shin/src/app"
 	"shin/src/config"
 	"shin/src/lib"
 	"shin/src/services"
 	"time"
 
+	"github.com/socious-io/goaccount"
 	database "github.com/socious-io/pkg_database"
 )
 
@@ -36,6 +38,10 @@ func main() {
 			CDNUrl:          config.Config.Storage.GCS.CDNUrl,
 			CredentialsPath: config.Config.Storage.GCS.CredentialsPath,
 		})
+	}
+
+	if err := goaccount.Setup(config.Config.GoAccounts); err != nil {
+		log.Fatalf("goaccount error %v", err)
 	}
 
 	app.Serve()
