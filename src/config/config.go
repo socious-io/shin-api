@@ -25,11 +25,12 @@ type ConfigType struct {
 		Migrations string `mapstructure:"migrations"`
 	} `mapstructure:"database"`
 	Sendgrid struct {
-		Disabled bool   `mapstructure:"disabled"`
-		URL      string `mapstructure:"url"`
-		ApiKey   string `mapstructure:"api_key"`
+		Disabled  bool              `mapstructure:"disabled"`
+		URL       string            `mapstructure:"url"`
+		ApiKey    string            `mapstructure:"apikey"`
+		Templates map[string]string `mapstructure:"templates"`
 	} `mapstructure:"sendgrid"`
-	Wellet struct {
+	Wallet struct {
 		Agent       string `mapstructure:"agent"`
 		AgentApiKey string `mapstructure:"agent_api_key"`
 		Connect     string `mapstructure:"connect"`

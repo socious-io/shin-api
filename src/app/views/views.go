@@ -14,5 +14,4 @@ func Init(r *gin.Engine) {
 	mediaGroup(r)
 	kybVerificationGroup(r)
 	integrationGroup(r)
-	syncGroup(r)
 }

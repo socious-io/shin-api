@@ -82,7 +82,7 @@ func CreateConnection(callback string) (*Connect, error) {
 	url := strings.ReplaceAll(
 		body["invitation"].(map[string]interface{})["invitationUrl"].(string),
 		"https://my.domain.com/path",
-		config.Config.Wellet.Connect,
+		config.Config.Wallet.Connect,
 	)
 	url += fmt.Sprintf("&callback=%s", callback)
 	c := &Connect{
@@ -178,7 +178,7 @@ func RevokeCredential(credentialID string) error {
 
 func makeRequest(path string, method string, body H) ([]byte, error) {
 	client := &http.Client{}
-	url := fmt.Sprintf("%s%s", config.Config.Wellet.Agent, path)
+	url := fmt.Sprintf("%s%s", config.Config.Wallet.Agent, path)
 	jsonBody, err := json.Marshal(body)
 	if err != nil {
 		return nil, err
@@ -188,7 +188,7 @@ func makeRequest(path string, method string, body H) ([]byte, error) {
 		return nil, err
 	}
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("apikey", config.Config.Wellet.AgentApiKey)
+	req.Header.Set("apikey", config.Config.Wallet.AgentApiKey)
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
@@ -201,13 +201,13 @@ func makeRequest(path string, method string, body H) ([]byte, error) {
 
 func getRequest(path string) ([]byte, error) {
 	client := &http.Client{}
-	url := fmt.Sprintf("%s%s?t=%d", config.Config.Wellet.Agent, path, time.Now().Unix())
+	url := fmt.Sprintf("%s%s?t=%d", config.Config.Wallet.Agent, path, time.Now().Unix())
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return nil, err
 	}
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("apikey", config.Config.Wellet.AgentApiKey)
+	req.Header.Set("apikey", config.Config.Wallet.AgentApiKey)
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err

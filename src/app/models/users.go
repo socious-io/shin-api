@@ -190,3 +190,15 @@ func GetUserByUsername(username string) (*User, error) {
 	}
 	return u, nil
 }
+
+func (u *User) Delete(ctx context.Context) error {
+	if _, err := database.Query(
+		ctx,
+		"users/delete",
+		u.ID,
+	); err != nil {
+		return err
+	}
+
+	return nil
+}

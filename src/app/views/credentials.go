@@ -8,13 +8,14 @@ import (
 	"net/http"
 	"net/url"
 	"shin/src/app/models"
+	"shin/src/app/workers"
 	"shin/src/config"
 	"shin/src/lib"
-	"shin/src/services"
 	"shin/src/utils"
 	"strings"
 	"time"
 
+	"github.com/socious-io/gomail"
 	database "github.com/socious-io/pkg_database"
 
 	"github.com/gin-gonic/gin"
@@ -121,7 +122,7 @@ func credentialsGroup(router *gin.Engine) {
 
 		//Handling revoke async
 		for _, credential := range credentials {
-			go services.SendOperation(services.OperationConfig{
+			go workers.SendOperation(workers.OperationParams{
 				Trigger: models.OperationCredentialRevoke,
 				Entity:  credential,
 			})
@@ -200,11 +201,11 @@ func credentialsGroup(router *gin.Engine) {
 				"recipient":  fmt.Sprintf("%s %s", *cv.Recipient.FirstName, *cv.Recipient.LastName),
 				"link":       fmt.Sprintf("%s/connect/credential/%s", config.Config.FrontHost, cv.ID.String()),
 			}
-			services.SendEmail(services.EmailConfig{
-				Approach:    services.EmailApproachTemplate,
+			gomail.SendEmail(gomail.EmailConfig{
+				Approach:    gomail.EmailApproachTemplate,
 				Destination: *cv.Recipient.Email,
 				Title:       "Shin - Your verification credentials",
-				Template:    "credentials-recipients",
+				TemplateId:  "credentials-recipients",
 				Args:        items,
 			})
 		}
@@ -328,7 +329,7 @@ func credentialsGroup(router *gin.Engine) {
 					return
 				}
 				c.JSON(http.StatusCreated, i)
-				go services.InitiateImport(results, map[string]any{
+				go workers.InitiateImport(results, map[string]any{
 					"schema_id": schema.ID,
 					"user_id":   user.ID,
 					"file_name": header.Filename,
@@ -439,11 +440,11 @@ func credentialsGroup(router *gin.Engine) {
 					"link":       fmt.Sprintf("%s/connect/credential/%s", config.Config.FrontHost, credential.ID.String()),
 					"message":    form.Message,
 				}
-				services.SendEmail(services.EmailConfig{
-					Approach:    services.EmailApproachTemplate,
+				gomail.SendEmail(gomail.EmailConfig{
+					Approach:    gomail.EmailApproachTemplate,
 					Destination: *credential.Recipient.Email,
 					Title:       "Shin: Your Verifiable Credential is Here",
-					Template:    "credentials-recipients",
+					TemplateId:  "credentials-recipients",
 					Args:        items,
 				})
 			}
@@ -467,7 +468,7 @@ func credentialsGroup(router *gin.Engine) {
 
 		doneChan, errChan := make(chan bool), make(chan error)
 
-		go services.CredentialBulkEmailAsync(ctx, u.ID, form.SchemaID.String(), form.Message, doneChan, errChan)
+		go workers.CredentialBulkEmailAsync(ctx, u.ID, form.SchemaID.String(), form.Message, doneChan, errChan)
 		for {
 			select {
 			case <-doneChan:
