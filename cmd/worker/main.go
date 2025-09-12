@@ -1,11 +1,12 @@
 package main
 
 import (
+	"shin/src/app/workers"
 	"shin/src/config"
-	"shin/src/lib"
-	"shin/src/services"
 	"time"
 
+	"github.com/socious-io/gomail"
+	"github.com/socious-io/gomq"
 	database "github.com/socious-io/pkg_database"
 )
 
@@ -20,11 +21,25 @@ func main() {
 		Timeout:     5 * time.Second,
 	})
 
-	lib.InitSendGridLib(lib.SendGridType{
-		Disabled: config.Config.Sendgrid.Disabled,
-		ApiKey:   config.Config.Sendgrid.ApiKey,
-		Url:      config.Config.Sendgrid.URL,
+	gomq.Setup(gomq.Config{
+		Url:        config.Config.Nats.Url,
+		Token:      config.Config.Nats.Token,
+		ChannelDir: "shin",
+		Consumers:  map[string]func(interface{}){},
 	})
 
-	services.Init()
+	//Initializing GoMail Library and Add it as Worker
+	gomail.Setup(gomail.Config{
+		ApiKey:         config.Config.Sendgrid.ApiKey,
+		Url:            config.Config.Sendgrid.URL,
+		DefaultFrom:    "info@socious.io",
+		DefaultSubject: "Socious Verify",
+		Templates:      config.Config.Sendgrid.Templates,
+		WorkerChannel:  "shin/email",
+		MessageQueue:   gomq.Mq,
+	})
+
+	workers.RegisterConsumers()
+
+	gomq.Init()
 }

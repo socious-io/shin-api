@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"regexp"
 	"shin/src/app/models"
-	"shin/src/services"
 	"shin/src/utils"
 	"strconv"
 	"strings"
@@ -17,6 +16,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/socious-io/goaccount"
+	"github.com/socious-io/gomail"
 )
 
 func authGroup(router *gin.Engine) {
@@ -179,11 +179,11 @@ func authGroup(router *gin.Engine) {
 
 		//Sending Email
 		items := map[string]string{"code": strconv.Itoa(otp.Code)}
-		services.SendEmail(services.EmailConfig{
-			Approach:    services.EmailApproachTemplate,
+		gomail.SendEmail(gomail.EmailConfig{
+			Approach:    gomail.EmailApproachTemplate,
 			Destination: u.Email,
 			Title:       "OTP Code",
-			Template:    "otp",
+			TemplateId:  "otp",
 			Args:        items,
 		})
 
@@ -264,11 +264,11 @@ func authGroup(router *gin.Engine) {
 			items["name"] = *u.FirstName
 		}
 
-		services.SendEmail(services.EmailConfig{
-			Approach:    services.EmailApproachTemplate,
+		gomail.SendEmail(gomail.EmailConfig{
+			Approach:    gomail.EmailApproachTemplate,
 			Destination: u.Email,
 			Title:       "OTP Code",
-			Template:    "otp",
+			TemplateId:  "otp",
 			Args:        items,
 		})
 
@@ -319,11 +319,11 @@ func authGroup(router *gin.Engine) {
 			items["name"] = *u.FirstName
 		}
 
-		services.SendEmail(services.EmailConfig{
-			Approach:    services.EmailApproachTemplate,
+		gomail.SendEmail(gomail.EmailConfig{
+			Approach:    gomail.EmailApproachTemplate,
 			Destination: u.Email,
 			Title:       "OTP Code",
-			Template:    "otp",
+			TemplateId:  "otp",
 			Args:        items,
 		})
 
@@ -424,11 +424,11 @@ func authGroup(router *gin.Engine) {
 			items["name"] = *u.FirstName
 		}
 
-		services.SendEmail(services.EmailConfig{
-			Approach:    services.EmailApproachTemplate,
+		gomail.SendEmail(gomail.EmailConfig{
+			Approach:    gomail.EmailApproachTemplate,
 			Destination: u.Email,
 			Title:       "Forget Password OTP Code",
-			Template:    "forget-password",
+			TemplateId:  "forget-password",
 			Args:        items,
 		})
 

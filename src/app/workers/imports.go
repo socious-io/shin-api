@@ -1,4 +1,4 @@
-package services
+package workers
 
 import (
 	"context"
@@ -6,44 +6,41 @@ import (
 	"fmt"
 	"shin/src/app/models"
 	"shin/src/config"
-	"shin/src/utils"
 	"strconv"
 	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"github.com/socious-io/gomail"
+	"github.com/socious-io/gomq"
 )
 
-var ImportChannel = CategorizeChannel("import")
+var ImportChannel = "import" //TODO: Categorize
 var ImportWorkersCount = 4
 
-type ImportConfig struct {
+type ImportParams struct {
 	Import models.Import
 	Record map[string]any
 	Meta   map[string]any
 }
 
-func SendImport(importConfig ImportConfig) {
-	Mq.sendJson(ImportChannel, importConfig)
+func SendImport(importParams ImportParams) {
+	gomq.Mq.SendJson(ImportChannel, importParams)
 }
 
-func ImportWorker(message interface{}) {
-	importConfig := new(ImportConfig)
-	utils.Copy(message, importConfig)
-
+func ImportWorker(params ImportParams) error {
 	var (
-		importObj = importConfig.Import
-		record    = importConfig.Record
-		meta      = importConfig.Meta
+		importObj = params.Import
+		record    = params.Record
+		meta      = params.Meta
 	)
 
-	if importObj.Target == models.ImportTargetCredentials {
-		err := importCredentials(record, meta, importObj)
-		if err != nil {
-			fmt.Println("Couldn't Import Docs to Database, Error: ", err.Error())
-		}
+	switch importObj.Target {
+	case models.ImportTargetCredentials:
+		return importCredentials(record, meta, importObj)
 	}
 
+	return nil
 }
 
 /*
@@ -53,7 +50,7 @@ Initiate Import
 func InitiateImport(results []map[string]any, meta map[string]any, i models.Import) {
 
 	for _, result := range results {
-		SendImport(ImportConfig{
+		SendImport(ImportParams{
 			Import: i,
 			Record: result,
 			Meta:   meta,
@@ -133,11 +130,11 @@ func importCredentials(record map[string]any, meta map[string]any, i models.Impo
 	}
 
 	if i.Status == models.ImportStatusCompleted {
-		SendEmail(EmailConfig{
-			Approach:    EmailApproachTemplate,
+		gomail.SendEmail(gomail.EmailConfig{
+			Approach:    gomail.EmailApproachTemplate,
 			Destination: u.Email,
 			Title:       "Shin: Your import is ready",
-			Template:    "credentials-import-completed",
+			TemplateId:  "credentials-import-completed",
 			Args: map[string]string{
 				"file_name":   file_name,
 				"total_count": strconv.Itoa(i.TotalCount),

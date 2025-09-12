@@ -55,11 +55,6 @@ type SessionForm struct {
 	Code string `json:"code" validate:"required"`
 }
 
-type SyncForm struct {
-	Organizations []models.Organization `json:"organizations"`
-	User          models.User           `json:"user" validate:"required"`
-}
-
 // Others
 type OrganizationForm struct {
 	Name        string          `json:"name" validate:"required,min=3,max=32"`
