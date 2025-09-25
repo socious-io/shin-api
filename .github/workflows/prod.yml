@@ -17,7 +17,7 @@ jobs:
   test-build:
     name: Test & Build for Production env
     # if: github.ref == 'refs/heads/production' && github.event_name == 'push'
-    runs-on: ["shin-production"]
+    runs-on: ["socious-runner"]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -90,7 +90,7 @@ jobs:
     needs: [test-build]
     name: Deploy to Production
     # if: github.ref == 'refs/heads/production' && github.event_name == 'push'
-    runs-on: ["shin-production"]
+    runs-on: ["socious-runner"]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4

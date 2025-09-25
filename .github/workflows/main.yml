@@ -18,7 +18,7 @@ jobs:
   test-build-dev:
     name: Test & Build for Development env
     # if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    runs-on: ["shin-dev"]
+    runs-on: ["socious-runner-dev"]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -91,7 +91,7 @@ jobs:
     needs: [test-build-dev]
     name: Deploy to Dev
     # if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    runs-on: ["shin-dev"]
+    runs-on: ["socious-runner-dev"]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
