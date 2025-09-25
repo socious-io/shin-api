@@ -290,6 +290,8 @@ github.com/socious-io/gomail v0.1.3 h1:pykLCOY3Iiao5yjc+7gJ035oUjtrDD6xIVSo8Y2Ln
 github.com/socious-io/gomail v0.1.3/go.mod h1:lxY5hsACBYClxcfbZN96eAmERsaNYZCNljWU9sd7Buw=
 github.com/socious-io/gomq v0.2.2-0.20250831194730-a20916bdb188 h1:KlVohAwMRwNC2yhXfmQgFuJu8simfv8QdCpQZ2NMayA=
 github.com/socious-io/gomq v0.2.2-0.20250831194730-a20916bdb188/go.mod h1:qx9vhqU48qydq0cTgv+mkZ9jL1ZWvHaYNqZ0xtclYec=
+github.com/socious-io/gomq v0.2.2 h1:vNpTf1ZTnG4EnD+g36Y4IMAgTNJ+7H5NAA6hfBjTzRo=
+github.com/socious-io/gomq v0.2.2/go.mod h1:AhSQDK92mtr1DpBD/52w2VywPwyn75/AP/GAuU4GGsY=
 github.com/socious-io/pkg_database v1.0.0 h1:y7VNH6IDE49qGBgiseCsMA0h3FRWvmR5jpwtMryl5ow=
 github.com/socious-io/pkg_database v1.0.0/go.mod h1:6YOOJBPcPq2XTnexr4QByeRZpjQ+pckft0YHAvL0npU=
 github.com/sony/gobreaker v1.0.0 h1:feX5fGGXSl3dYd4aHZItw+FpHLvvoaqkawKjVNiFMNQ=
